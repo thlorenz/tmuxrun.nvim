@@ -37,7 +37,7 @@ local function activePaneIndex()
 end
 
 -- @returns list of tmux panes of the current window
-local function tmuxPanesCurrentWindow()
+local function tmuxPanes()
 	local panes = sendTmuxCommand("list-panes")
 	return splitOnNewline(panes)
 end
@@ -59,6 +59,45 @@ function windowMap()
 	return windowMap
 end
 
+local paneIndexRx = "^(%d+): "
+-- @returns all indices of the panes of the current window
+local function paneIndices()
+	local indices = {}
+	local panes = tmuxPanes()
+	for _, pane in pairs(panes) do
+		local index = pane:match(paneIndexRx)
+		if index ~= nil then
+			table.insert(indices, index, index)
+		end
+	end
+	return indices
+end
+
+-- @param pane - the pane index we're looking for
+-- @returns true if the specified pane index is found in the current window
+local function desiredPaneExists(pane)
+	local indices = paneIndices()
+	return indices[pane] ~= nil
+end
+
+local function tmuxInfo(message)
+	-- TODO: this should accept optional target pane, default to current.
+	-- Pass that to TargetedCommand as "display-message", "-p '#{...}')
+	return sendTmuxCommand("display-message -p '#{" .. message .. "}'")
+end
+
+-- TODO(thlorenz): CONTINUE HERE
+local layout = tmuxInfo("window_layout")
+
+print(layout)
+
+local function currentMajorOrientation()
+	-- let orientation_map = { '[': 'v', '{': 'h' }
+	-- let layout = tmuxInfo('window_layout')
+	-- let outermost_orientation = substitute(layout, '[^[{]', '', 'g')[0]
+	-- return orientation_map[outermost_orientation]
+end
+
 -- -----------------
 -- API
 -- -----------------
@@ -66,6 +105,31 @@ end
 -- Focuses the tmux pane in which this vim session started up
 function M.focusVimPane(self)
 	focusTmuxPane(self.vimPane)
+end
+
+-- @param pane - the pane number we want to use for the runner
+-- @returns true if the provided pane does not exist yet
+function M.validRunnerPaneNumber(self, pane)
+	self.vimPane = activePaneIndex()
+
+	if pane == self.vimPane then
+		return false
+	end
+	if desiredPaneExists(pane) then
+		return false
+	end
+	return true
+end
+
+function M.attachToSpecifiedPane(self, pane)
+	if self:validRunnerPaneNumber(pane) then
+		self.runnerPane = pane
+		self.vimPane = activePaneIndex()
+		vim.notify("Runner pane set to: " .. pane, "info")
+		-- TODO(thlorenz): orientation
+	else
+		vim.notify("Invalid pane number: " .. pane, "warn")
+	end
 end
 
 -- Kill the tmux pane to which the tmux runner was attached
