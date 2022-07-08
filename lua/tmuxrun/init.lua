@@ -1,7 +1,22 @@
 local M = {
 	vimPane = nil,
 	runnerPane = nil,
-	runnerOrientaion = nil,
+	runnerOrientation = nil,
+	initialCommand = nil,
+	runnerPercentage = nil,
+
+	gitCdUpOnOpen = nil,
+	clearBeforeSend = nil,
+	prompt = nil,
+	useVtrMaps = nil,
+	clearOnReorient = nil,
+	clearOnReattach = nil,
+	detachedName = nil,
+	clearSequence = nil,
+	displayPaneNumbers = nil,
+	stripLeadingWhitespace = nil,
+	clearEmptyLines = nil,
+	appendNewline = nil,
 }
 
 -- -----------------
@@ -45,6 +60,8 @@ end
 
 local windowPatternRx = "^(%d+): ([-_a-zA-Z]+)[-* ]"
 
+-- @returns a list of all tmux windows with the key being the index and the
+-- value the window label
 function windowMap()
 	local windowMap = {}
 	local result = sendTmuxCommand("list-windows")
@@ -105,6 +122,25 @@ function M.focusVimPane(self)
 	focusTmuxPane(self.vimPane)
 end
 
+function M._sendKeys(self, keys)
+	local targetedCmd = targetedTmuxCommand("send-keys", self.runnerPane)
+	local fullCmd = targetedCmd .. " " .. keys
+	return sendTmuxCommand(fullCmd)
+end
+
+function M.sendEnterSequence(self)
+	self:_sendKeys("Enter")
+end
+
+function M.sendKeys(self, keys)
+	local cmd = self.clearBeforeSend and self.clearSequence .. keys or keys
+	local result = self:_sendKeys(cmd)
+	if result ~= nil and result ~= "" then
+		return result
+	end
+	return self:sendEnterSequence()
+end
+
 -- @param pane - the pane number we want to use for the runner
 -- @returns true if the provided pane does not exist yet
 function M.validRunnerPaneNumber(self, pane)
@@ -125,12 +161,34 @@ function M.toggleOrientationVariable(self)
 	self.runnerOrientation = (self.runnerOrientation == "v" and "h" or "v")
 end
 
+-- @returns true if the current runner pane is valid, otherwise it notifies an
+-- error
+function validRunnerPaneSet(self)
+	if self.runnerPane == nil then
+		vim.notify("No runner pane attached.", "error")
+		return false
+	end
+	if self.validRunnerPaneNumber(self.runnerPane) then
+		vim.notify(
+			"Runner pane setting ("
+				.. self.runnerPane
+				.. ") is invalid. Please reattach.",
+			"error"
+		)
+		return false
+	end
+	return true
+end
+
+-- Tries to set the runner pane to the specified pane after checkint that that
+-- pane does ont exist yet
+-- It also refreshes the vimPane and the runnerOrientation
 function M.attachToSpecifiedPane(self, pane)
 	if self:validRunnerPaneNumber(pane) then
 		self.runnerPane = pane
 		self.vimPane = activePaneIndex()
 		vim.notify("Runner pane set to: " .. pane, "info")
-		self.runnerOrientaion = currentMajorOrientation()
+		self.runnerOrientation = currentMajorOrientation()
 	else
 		vim.notify("Invalid pane number: " .. pane, "warn")
 	end
@@ -141,20 +199,97 @@ function M.killLocalRunner()
 	-- TODO(thlorenz):
 end
 
+function M.createRunnerPane(self, config)
+	if config ~= nil then
+		self.runnerOrientation = config.orientation or self.runnerOrientation
+		self.runnerPercentage = config.percentage or self.runnerPercentage
+		self.initialCommand = config.cmd or self.initialCommand
+	end
+
+	self.vimPane = activePaneIndex()
+
+	local cmd = "split-window -p "
+		.. self.runnerPercentage
+		.. " -"
+		.. self.runnerOrientation
+	local result = sendTmuxCommand(cmd)
+	if result ~= nil and result ~= "" then
+		vim.notify("Failed to create runner pane (" .. result .. ")", "error")
+	end
+
+	self.runnerPane = activePaneIndex()
+	self:focusVimPane()
+
+	if self.gitCdUpOnOpen then
+		-- TODO(thlorenz): need gitCdUp
+		self:gitCdUp()
+	end
+
+	if self.initialCommand ~= nil and self.initialCommand ~= "" then
+		assert(not self:sendKeys(self.initialCommand))
+	end
+end
+
 function M.currentSettings(self)
 	return {
 		vimPane = self.vimPane,
 		runnerPane = self.runnerPane,
-		runnerOrientaion = self.runnerOrientaion,
+		runnerOrientation = self.runnerOrientation,
+		runnerPercentage = self.runnerPercentage,
+		initialCommand = self.initialCommand,
+		gitCdUpOnOpen = self.gitCdUpOnOpen,
+		clearBeforeSend = self.clearBeforeSend,
+		prompt = self.prompt,
+		useVtrMaps = self.useVtrMaps,
+		clearOnReorient = self.clearOnReorient,
+		clearOnReattach = self.clearOnReattach,
+		detachedName = self.detachedName,
+		clearSequence = self.clearSequence,
+		displayPaneNumbers = self.displayPaneNumbers,
+		stripLeadingWhitespace = self.stripLeadingWhitespace,
+		clearEmptyLines = self.clearEmptyLines,
+		appendNewline = self.appendNewline,
 	}
 end
 
-function M.init(self)
-	self.vimPane = activePaneIndex()
+function M.dumpCurrentSettings(self)
+	print(vim.inspect(self:currentSettings()))
+end
+function M.noteCurrentSettings(self)
+	vim.notify(vim.inspect(self:currentSettings()), "info")
 end
 
-M:init()
-M:attachToSpecifiedPane(4)
-print(vim.inspect(M:currentSettings()))
+function M.initSetting(self, name, value, default)
+	self[name] = value == nil and default or value
+end
+
+function M.init(self, config)
+	config = config or {}
+	self.vimPane = activePaneIndex()
+
+	self:initSetting("runnerPercentage", config.runnerPercentage, 20)
+	self:initSetting("runnerOrientation", config.runnerOrientation, "v")
+	self:initSetting("initialCommand", config.initialCommand, "")
+	self:initSetting("gitCdUpOnOpen", config.gitCdUpOnOpen, false)
+	self:initSetting("clearBeforeSend", config.clearBeforeSend, true)
+	self:initSetting("prompt", config.prompt, "Command to run: ")
+	self:initSetting("useVtrMaps", config.useVtrMaps, false)
+	self:initSetting("clearOnReorient", config.clearOnReorient, true)
+	self:initSetting("clearOnReattach", config.clearOnReattach, true)
+	self:initSetting("detachedName", config.detachedName, "VTR_Pane")
+	self:initSetting("clearSequence", config.clearSequence, "")
+	self:initSetting("displayPaneNumbers", config.displayPaneNumbers, true)
+	self:initSetting(
+		"stripLeadingWhitespace",
+		config.stripLeadingWhitespace,
+		true
+	)
+	self:initSetting("clearEmptyLines", config.clearEmptyLines, true)
+	self:initSetting("appendNewline", config.appendNewline, false)
+end
+
+M:init({ initialCommand = "ls" })
+-- M:noteCurrentSettings()
+M:createRunnerPane()
 
 return M
