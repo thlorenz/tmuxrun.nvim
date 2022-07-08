@@ -1,6 +1,7 @@
 local M = {
 	vimPane = nil,
 	runnerPane = nil,
+	runnerOrientaion = nil,
 }
 
 -- -----------------
@@ -33,7 +34,7 @@ local function focusTmuxPane(paneNumber)
 end
 
 local function activePaneIndex()
-	return sendTmuxCommand('display-message -p "#{pane_index}"')
+	return tonumber(sendTmuxCommand('display-message -p "#{pane_index}"'))
 end
 
 -- @returns list of tmux panes of the current window
@@ -49,9 +50,7 @@ function windowMap()
 	local result = sendTmuxCommand("list-windows")
 	local lines = splitOnNewline(result)
 	for _, line in pairs(lines) do
-		print(line)
 		local n, label = line:match(windowPatternRx)
-		print(n, label)
 		if n ~= nil and label ~= nil then
 			table.insert(windowMap, n, label)
 		end
@@ -86,16 +85,15 @@ local function tmuxInfo(message)
 	return sendTmuxCommand("display-message -p '#{" .. message .. "}'")
 end
 
--- TODO(thlorenz): CONTINUE HERE
-local layout = tmuxInfo("window_layout")
-
-print(layout)
-
 local function currentMajorOrientation()
-	-- let orientation_map = { '[': 'v', '{': 'h' }
-	-- let layout = tmuxInfo('window_layout')
-	-- let outermost_orientation = substitute(layout, '[^[{]', '', 'g')[0]
-	-- return orientation_map[outermost_orientation]
+	local layout = tmuxInfo("window_layout")
+	local bracketsAndBracesOnlyOnly = layout:gsub("[^[{]", "")
+	local outerMostOrientation = bracketsAndBracesOnlyOnly:sub(0, 1)
+	-- TODO(thlorenz): the original code does not account for the last (nil)
+	-- case which occurs when there is only one pane in the current window
+	return outerMostOrientation == "{" and "v"
+		or outerMostOrientation == "[" and "h"
+		or nil
 end
 
 -- -----------------
@@ -121,12 +119,18 @@ function M.validRunnerPaneNumber(self, pane)
 	return true
 end
 
+function M.toggleOrientationVariable(self)
+	-- TODO(thlorenz): this doesn't account either for the case where the current
+	-- value is nil (see todo in currentMajorOrientation)
+	self.runnerOrientation = (self.runnerOrientation == "v" and "h" or "v")
+end
+
 function M.attachToSpecifiedPane(self, pane)
 	if self:validRunnerPaneNumber(pane) then
 		self.runnerPane = pane
 		self.vimPane = activePaneIndex()
 		vim.notify("Runner pane set to: " .. pane, "info")
-		-- TODO(thlorenz): orientation
+		self.runnerOrientaion = currentMajorOrientation()
 	else
 		vim.notify("Invalid pane number: " .. pane, "warn")
 	end
@@ -137,10 +141,20 @@ function M.killLocalRunner()
 	-- TODO(thlorenz):
 end
 
+function M.currentSettings(self)
+	return {
+		vimPane = self.vimPane,
+		runnerPane = self.runnerPane,
+		runnerOrientaion = self.runnerOrientaion,
+	}
+end
+
 function M.init(self)
 	self.vimPane = activePaneIndex()
 end
 
 M:init()
+M:attachToSpecifiedPane(4)
+print(vim.inspect(M:currentSettings()))
 
 return M
