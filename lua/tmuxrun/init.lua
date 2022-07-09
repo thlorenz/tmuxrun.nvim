@@ -17,11 +17,14 @@ local M = {
 	stripLeadingWhitespace = nil,
 	clearEmptyLines = nil,
 	appendNewline = nil,
+
+	deferSendKeysForNewRunner = nil,
 }
 
 -- -----------------
--- Utils
+-- Tmux Utils
 -- -----------------
+
 -- Adds a pane to target with a command via the `-t` flag
 local function targetedTmuxCommand(command, targetPane)
 	return command .. " -t " .. targetPane
@@ -124,7 +127,7 @@ end
 
 function M._sendKeys(self, keys)
 	local targetedCmd = targetedTmuxCommand("send-keys", self.runnerPane)
-	local fullCmd = targetedCmd .. " " .. keys
+	local fullCmd = (targetedCmd .. " " .. keys:gsub(" ", " Space "))
 	return sendTmuxCommand(fullCmd)
 end
 
@@ -226,7 +229,9 @@ function M.createRunnerPane(self, config)
 	end
 
 	if self.initialCommand ~= nil and self.initialCommand ~= "" then
-		assert(not self:sendKeys(self.initialCommand))
+		vim.defer_fn(function()
+			assert(not self:sendKeys(self.initialCommand))
+		end, self.deferSendKeysForNewRunner)
 	end
 end
 
@@ -286,9 +291,14 @@ function M.init(self, config)
 	)
 	self:initSetting("clearEmptyLines", config.clearEmptyLines, true)
 	self:initSetting("appendNewline", config.appendNewline, false)
+	self:initSetting(
+		"deferSendKeysForNewRunner",
+		config.deferSendKeysForNewRunner,
+		0
+	)
 end
 
-M:init({ initialCommand = "ls" })
+M:init({ initialCommand = "ls -la", deferSendKeysForNewRunner = 600 })
 -- M:noteCurrentSettings()
 M:createRunnerPane()
 
