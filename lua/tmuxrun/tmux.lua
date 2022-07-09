@@ -17,6 +17,26 @@ function M.getLinesForCommand(cmd)
 	return utils.splitOnNewline(output)
 end
 
+-- Builds a table of all sessions and their windows
+-- Table Structure:
+--
+-- ```
+-- {
+--   session1: {
+--     sessionId: string
+--     name: string
+--     window1: {
+--       id: string
+--       index: number
+--       active = bool
+--       panesCount = number
+--     }
+--     window2: { .. }
+--   }
+--   session2: { .. }
+-- }
+-- ```
+-- @returns session/windows table
 function M.getSessions()
 	local sessions = {}
 
@@ -56,12 +76,13 @@ function M.getSessions()
 					.. "(.+)$",
 				line
 			)
-		sessions[session] = sessions[session] or { sessionId = sessionId }
+		sessions[session] = sessions[session]
+			or { sessionId = sessionId, name = session }
 		sessions[session][window] = {
 			id = windowId,
-			index = windowIdx,
+			index = tonumber(windowIdx),
 			active = windowActive == "1" and true or false,
-			panesCount = windowPanes,
+			panesCount = tonumber(windowPanes),
 		}
 	end
 	return sessions

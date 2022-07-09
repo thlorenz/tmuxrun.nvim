@@ -43,16 +43,40 @@ function M.printSessionNames(self)
 	print(str)
 end
 
-function M.sessionNamesAndMsg(self)
+function M.sessionNamesAndMsg(self, currentlySelectedSessionName)
 	local sessionNames = self:getSessionNames()
 	table.sort(sessionNames)
-	local msg = "Sessions:\n" .. "---------\n"
+	local msg = "\nSessions:\n" .. "---------\n"
 	for idx, name in pairs(sessionNames) do
+		local selectedIndicator = " "
+		if name == currentlySelectedSessionName then
+			selectedIndicator = "*"
+		end
 		local idxStr = "" .. idx
-		local padded = (" "):rep(3 - #idxStr) .. idxStr
+		local padded = selectedIndicator .. (" "):rep(3 - #idxStr) .. idxStr
 		msg = msg .. padded .. ": " .. name .. "\n"
 	end
 	return sessionNames, msg
 end
+
+function M.getSessionAtIdx(self, idx)
+	return self.sessions[idx]
+end
+
+function M.getSessionByName(self, name)
+	return self.sessions[name]
+end
+
+function M.getSessionById(self, id)
+	for _, session in pairs(self.sessions) do
+		if session.id == id then
+			return session
+		end
+	end
+end
+
+-- M:refresh()
+-- local session = M:getSessionByName("lua")
+-- utils.dump(session)
 
 return M
