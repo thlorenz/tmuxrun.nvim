@@ -1,8 +1,7 @@
-local M = {}
+local SEP = "&"
+local M = { SEP = SEP }
 
 local utils = require("tmuxrun.utils")
-
-local SEP = "&"
 
 -- Executes a command of form `tmux <command>`
 function M.sendTmuxCommand(cmd)
@@ -23,13 +22,13 @@ end
 -- ```
 -- {
 --   session1: {
---     sessionId: string
+--     id: string
 --     name: string
 --     window1: {
 --       id: string
 --       index: number
 --       active = bool
---       panesCount = number
+--       paneCount = number
 --     }
 --     window2: { .. }
 --   }
@@ -77,13 +76,13 @@ function M.getSessions()
 				line
 			)
 		sessions[session] = sessions[session]
-			or { sessionId = sessionId, name = session, windows = {} }
+			or { id = sessionId, name = session, windows = {} }
 		sessions[session].windows[window] = {
 			id = windowId,
 			index = tonumber(windowIdx),
 			name = window,
 			active = windowActive == "1" and true or false,
-			panesCount = tonumber(windowPanes),
+			paneCount = tonumber(windowPanes),
 		}
 	end
 	return sessions

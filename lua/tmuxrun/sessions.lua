@@ -65,6 +65,22 @@ function M.sessionNamesAndMsg(self, currentlySelectedSessionName)
 	return sessionNames, msg
 end
 
+function M.getSessionAtIdx(self, idx)
+	return self.sessions[idx]
+end
+
+function M.getSessionByName(self, name)
+	return self.sessions[name]
+end
+
+function M.getSessionById(self, id)
+	for _, session in pairs(self.sessions) do
+		if session.id == id then
+			return session
+		end
+	end
+end
+
 -- -----------------
 -- Windows
 -- -----------------
@@ -114,6 +130,12 @@ function M.getActiveWindow(self, sessionName)
 	assert(false, "Each session should have an active window")
 end
 
+function M.isWindowActive(self, sessionName, windowName)
+	local activeWindow = self:getActiveWindow(sessionName)
+	utils.dump(activeWindow)
+	return activeWindow.name == windowName
+end
+
 function M.windowListAndMsg(self, sessionName)
 	local windows = self:sortedWindowsByIndex(sessionName)
 	assert(windows, "Windows for session '" .. sessionName .. "' not found")
@@ -126,24 +148,39 @@ function M.windowListAndMsg(self, sessionName)
 	return windows, msg
 end
 
-function M.getSessionAtIdx(self, idx)
-	return self.sessions[idx]
+-- -----------------
+-- Clients
+-- -----------------
+function M.getClients(self)
+	local clients = {}
+	local cmd = 'list-clients -F "#{client_name}'
+		.. tmux.SEP
+		.. '#{session_id}"'
+	local output = tmux.sendTmuxCommand(cmd)
+	local lines = utils.splitOnNewline(output)
+	for _, line in pairs(lines) do
+		local clientName, sessionId = utils.split(
+			"(.+)" .. tmux.SEP .. "(.+)",
+			line
+		)
+		local session = self:getSessionById(sessionId)
+		local client = { name = clientName, session = session }
+		table.insert(clients, client)
+	end
+	return clients
 end
 
-function M.getSessionByName(self, name)
-	return self.sessions[name]
-end
-
-function M.getSessionById(self, id)
-	for _, session in pairs(self.sessions) do
-		if session.id == id then
-			return session
+function M.getClientForSession(self, sessionId)
+	local clients = self:getClients()
+	for _, client in pairs(clients) do
+		if client.session.id == sessionId then
+			return client
 		end
 	end
 end
 
 -- M:refresh()
--- print(M:windowNamesAndMsg("lua"))
--- utils.dump(session)
+-- local client = M:getClientForSession("$16")
+-- utils.dump(client)
 
 return M
