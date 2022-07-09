@@ -77,10 +77,11 @@ function M.getSessions()
 				line
 			)
 		sessions[session] = sessions[session]
-			or { sessionId = sessionId, name = session }
-		sessions[session][window] = {
+			or { sessionId = sessionId, name = session, windows = {} }
+		sessions[session].windows[window] = {
 			id = windowId,
 			index = tonumber(windowIdx),
+			name = window,
 			active = windowActive == "1" and true or false,
 			panesCount = tonumber(windowPanes),
 		}

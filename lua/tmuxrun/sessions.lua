@@ -2,6 +2,13 @@ local M = {
 	sessions = {},
 }
 
+function re_require(pack)
+	package.loaded[pack] = nil
+	return require(pack)
+end
+
+local require = re_require
+
 local utils = require("tmuxrun.utils")
 local tmux = require("tmuxrun.tmux")
 
@@ -15,10 +22,10 @@ end
 
 function M.getActiveWindows(self)
 	local sessions = {}
-	for session, windows in pairs(self.sessions) do
-		for name, win in pairs(windows) do
+	for sessionName, session in pairs(self.sessions) do
+		for name, win in pairs(session.windows) do
 			if win.active then
-				sessions[session] = vim.tbl_extend(
+				sessions[sessionName] = vim.tbl_extend(
 					"force",
 					win,
 					{ name = name }
@@ -52,11 +59,71 @@ function M.sessionNamesAndMsg(self, currentlySelectedSessionName)
 		if name == currentlySelectedSessionName then
 			selectedIndicator = "*"
 		end
-		local idxStr = "" .. idx
-		local padded = selectedIndicator .. (" "):rep(3 - #idxStr) .. idxStr
-		msg = msg .. padded .. ": " .. name .. "\n"
+		local padded = utils.padWith("" .. idx, 3)
+		msg = msg .. selectedIndicator .. padded .. ": " .. name .. "\n"
 	end
 	return sessionNames, msg
+end
+
+-- -----------------
+-- Windows
+-- -----------------
+function M.sortedWindows(self, sessionName, comparator)
+	local session = self.sessions[sessionName]
+	if session == nil then
+		return nil
+	end
+
+	if session.windows ~= nil then
+		local list = {}
+		for _, window in pairs(session.windows) do
+			table.insert(list, window)
+		end
+		table.sort(list, comparator)
+		return list
+	else
+		return nil
+	end
+end
+
+function M.sortedWindowsByIndex(self, sessionName)
+	return self:sortedWindows(sessionName, function(a, b)
+		return a.index < b.index
+	end)
+end
+
+function M.sortedWindowsByName(self, sessionName)
+	return self:sortedWindows(sessionName, function(a, b)
+		return a.name < b.name
+	end)
+end
+
+-- Looks for the active window of the provided session
+--
+-- @throws Assertion Error if either the session isn't found or it has no
+-- active window.
+-- @returns active window of the session
+function M.getActiveWindow(self, sessionName)
+	local session = self.sessions[sessionName]
+	assert(session, "Session '" .. sessionName .. "' not found")
+	for _, win in pairs(session.windows) do
+		if win.active then
+			return win
+		end
+	end
+	assert(false, "Each session should have an active window")
+end
+
+function M.windowListAndMsg(self, sessionName)
+	local windows = self:sortedWindowsByIndex(sessionName)
+	assert(windows, "Windows for session '" .. sessionName .. "' not found")
+	local msg = "\nWindows:\n" .. "--------\n"
+	for _, win in pairs(windows) do
+		local activeIndicator = win.active and "*" or " "
+		local padded = utils.padWith("" .. win.index, 2)
+		msg = msg .. activeIndicator .. padded .. ": " .. win.name .. "\n"
+	end
+	return windows, msg
 end
 
 function M.getSessionAtIdx(self, idx)
@@ -76,7 +143,7 @@ function M.getSessionById(self, id)
 end
 
 -- M:refresh()
--- local session = M:getSessionByName("lua")
+-- print(M:windowNamesAndMsg("lua"))
 -- utils.dump(session)
 
 return M

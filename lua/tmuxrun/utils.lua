@@ -21,6 +21,11 @@ function M.split(rx, str)
 	return str:match(rx)
 end
 
+function M.padWith(padTarget, minLen, filler)
+	filler = filler or " "
+	return (filler):rep(minLen - #padTarget) .. padTarget
+end
+
 function M.dump(obj)
 	print(vim.inspect(obj))
 end
