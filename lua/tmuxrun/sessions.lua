@@ -132,7 +132,6 @@ end
 
 function M.isWindowActive(self, sessionName, windowName)
 	local activeWindow = self:getActiveWindow(sessionName)
-	utils.dump(activeWindow)
 	return activeWindow.name == windowName
 end
 

@@ -4,11 +4,18 @@ if 1 ~= vim.fn.has("nvim-0.7.0") then
 end
 
 if vim.g.loaded_tmuxrun == 1 then
-	return
+	-- return
 end
 vim.g.loaded_tmuxrun = 1
 
-vim.api.nvim_create_user_command("VVtrSendCommandToRunner", function(opts) 
-  print("VtrSendCommandToRunner")
-  print(vim.inspect(opts))
+local require = require("tmuxrun.utils").re_require
+local api = require("tmuxrun.api")
+local utils = require("tmuxrun.utils")
+
+vim.api.nvim_create_user_command("TmuxSelectTarget", function(opts)
+	api.selectTarget()
 end, {})
+
+vim.api.nvim_create_user_command("TmuxSendCommand", function(opts)
+	api.sendCommand(opts.args, true)
+end, { nargs = 1 })
