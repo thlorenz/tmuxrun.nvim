@@ -88,4 +88,14 @@ function M.getSessions()
 	return sessions
 end
 
+function M.getActiveSessionWindowPane()
+	local cmd = "display-message -p '#S" .. SEP .. "#W" .. SEP .. "#P'"
+	local output = M.sendTmuxCommand(cmd)
+	local session, window, pane = utils.split(
+		"^(.+)" .. SEP .. "(.+)" .. SEP .. "(.+)",
+		utils.trim(output)
+	)
+	return { session = session, window = window, pane = pane }
+end
+
 return M

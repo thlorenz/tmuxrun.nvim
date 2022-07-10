@@ -30,4 +30,8 @@ function M.dump(obj)
 	print(vim.inspect(obj))
 end
 
+function M.trim(s)
+	return s:gsub("^%s*(.-)%s*$", "%1")
+end
+
 return M

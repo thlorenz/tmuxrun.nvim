@@ -50,13 +50,13 @@ function M.printSessionNames(self)
 	print(str)
 end
 
-function M.sessionNamesAndMsg(self, currentlySelectedSessionName)
+function M.sessionNamesAndMsg(self, sessionToDefaultTo)
 	local sessionNames = self:getSessionNames()
 	table.sort(sessionNames)
 	local msg = "\nSessions:\n" .. "---------\n"
 	for idx, name in pairs(sessionNames) do
 		local selectedIndicator = " "
-		if name == currentlySelectedSessionName then
+		if name == sessionToDefaultTo then
 			selectedIndicator = "*"
 		end
 		local padded = utils.padWith("" .. idx, 3)

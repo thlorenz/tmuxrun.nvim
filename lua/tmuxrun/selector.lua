@@ -10,14 +10,23 @@ local utils = require("tmuxrun.utils")
 
 -- @returns the selected session or nil if the user aborted or provided invalid input
 function M.selectSession(self, notifySuccess)
+	local active = tmux.getActiveSessionWindowPane()
+
 	local sessionNames, msg = sessions:sessionNamesAndMsg(
-		self.session and self.session.name
+		(self.session and self.session.name) or active.session
 	)
 
 	local input = vim.fn.input(msg .. "\nSession#: ")
 	if #input == 0 then
 		if self.session == nil then
-			vim.notify("No session selected", "warn")
+			if active.session == nil then
+				vim.notify("No session selected", "warn")
+			else
+				local session = sessions:getSessionByName(active.session)
+				-- fill in the input for the user
+				print(session.name)
+				self.session = session
+			end
 		else
 			if notifySuccess then
 				vim.notify(
@@ -57,11 +66,12 @@ function M.selectWindow(self, session)
 		return nil
 	end
 	local windows, msg = sessions:windowListAndMsg(session.name)
-	local input = vim.fn.input(
-		"Session: " .. session.name .. "\n" .. msg .. "\nWindow#: "
-	)
+	local input = vim.fn.input("\n" .. msg .. "\nWindow#: ")
 	if #input == 0 then
-		return sessions:getActiveWindow(session.name)
+		local window = sessions:getActiveWindow(session.name)
+		-- complete input for user
+		print(window.name)
+		return window
 	end
 
 	local winIdx = input:match("^(%d+)")
@@ -79,20 +89,66 @@ function M.selectWindow(self, session)
 	end
 end
 
-function M.selectPane(self, session, window)
+local function defaultPaneNumberAndPanesInput(session, window)
+	-- If user selected the same session and window that the vim instance is running in then
+	-- we don't want to ruse the pane a that it occupies.
+	-- Instead we look up if we have more than one pane and if so return any pane
+	-- that is not the vim pane.
+	local active = tmux.getActiveSessionWindowPane()
+	local defaultPaneNumber
+	if
+		session.name ~= active.session
+		and window.name ~= active.window
+		and active.pane ~= 1
+	then
+		defaultPaneNumber = 1
+	elseif window.paneCount > 1 then
+		defaultPaneNumber = 2
+	end
+
+	local panes = ""
+	for i = 1, window.paneCount do
+		local marker = (defaultPaneNumber == i and "*") or " "
+		local comma = i == 1 and "" or ", "
+		panes = panes .. comma .. marker .. i
+	end
+
+	return defaultPaneNumber, panes
+end
+
+local function maybeDisplayPanes(session, window)
 	-- showing pane numbers only makes sense if the following is true
 	-- 1. the selected window is active
 	-- 2. the selected session is attached
 	if sessions:isWindowActive(session.name, window.name) then
 		local client = sessions:getClientForSession(session.id)
 		if client ~= nil then
-			local cmd = "display-panes -t " .. client.name .. " -d 800"
-			tmux.sendTmuxCommand(cmd)
+			local cmd = "display-panes -t " .. client.name .. " -N -b -d 5000"
+			vim.defer_fn(function()
+				tmux.sendTmuxCommand(cmd)
+			end, 0)
 		end
 	end
-	local input = vim.fn.input("\nPane# (1.." .. window.paneCount .. "): ")
+end
+
+function M.selectPane(self, session, window)
+	maybeDisplayPanes(session, window)
+
+	local defaultPaneNumber, panes = defaultPaneNumberAndPanesInput(
+		session,
+		window
+	)
+
+	local input = vim.fn.input("\nPane# [" .. panes .. "]: ")
 	if #input == 0 then
-		return 1
+		if defaultPaneNumber ~= nil then
+			return defaultPaneNumber
+		else
+			-- If there is only one pane we should just create one vertically or horizontally and then
+			-- return that
+			-- TODO
+			return 1
+		end
 	end
 
 	local paneIdx = input:match("^(%d+)")
@@ -100,18 +156,16 @@ function M.selectPane(self, session, window)
 		paneIdx = tonumber(paneIdx)
 		if paneIdx > window.paneCount then
 			vim.notify(
-				"Not a valid pane idx: "
-					.. paneIdx
-					.. ", defaulting to first pane",
+				"Not a valid pane idx: " .. paneIdx .. ", defaulting pane",
 				"warn"
 			)
-			return 1
+			return defaultPaneNumber or 1
 		else
 			return paneIdx
 		end
 	else
 		vim.notify("Invalid idx selected, defaulting to first pane", "warn")
-		return 1
+		return defaultPaneNumber or 1
 	end
 end
 
@@ -155,5 +209,7 @@ end
 function M.tmuxTargetString(self)
 	return self.session.name .. ":" .. self.window.name .. "." .. self.pane
 end
+
+-- M:selectTarget()
 
 return M
