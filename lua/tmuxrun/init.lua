@@ -1,26 +1,68 @@
-local M = {}
+function re_require(pack)
+	package.loaded[pack] = nil
+	return require(pack)
+end
 
-local function splitOnNewline(str)
-	local lines = {}
-	for s in str:gmatch("[^\r\n]+") do
-		table.insert(lines, s)
+-- local require = re_require
+
+local selector = require("tmuxrun.selector")
+local tmux = require("tmuxrun.tmux")
+local config = require("tmuxrun.config")
+
+local M = { selector = selector }
+local conf = config.values
+
+-- -----------------
+-- Sender
+-- -----------------
+
+-- Adds a pane to target with a command via the `-t` flag
+local function targetedTmuxCommand(command, targetPane)
+	return command .. " -t " .. targetPane
+end
+
+function M._sendKeys(self, keys)
+	assert(
+		self.selector:hasTarget(),
+		"should have selected session, window and pane"
+	)
+	local cmd = "send-keys -t "
+		.. self.selector:tmuxTargetString()
+		.. " "
+		.. keys:gsub(" ", " Space ")
+
+	return tmux.sendTmuxCommand(cmd)
+end
+
+function M.sendEnterSequence(self)
+	self:_sendKeys("Enter")
+end
+
+function M.sendKeys(self, keys)
+	if not self.selector:hasTarget() then
+		self.selector:selectTarget()
 	end
-	return lines
+
+	-- TODO(thlorenz): allow user to specifty that a pane should open next to the vim pane
+	if not self.selector:hasTarget() then
+		return
+	end
+
+	local allKeys = conf.clearBeforeSend and conf.clearSequence .. keys or keys
+	local result = self:_sendKeys(allKeys)
+	if result ~= nil and result ~= "" then
+		return result
+	end
+	return self:sendEnterSequence()
 end
 
-local function sendTmuxCommand(command)
-	local prefixedCommand = "tmux " .. command
-	local result = vim.fn.system(prefixedCommand)
-	-- TODO(thlorenz): original SendTmuxCommand strips results we might have to do that as well
-	return result
+function M.setup(opts)
+	config.setup(opts)
+	return M
 end
 
-local function tmuxPanes()
-	local panes = sendTmuxCommand("list-panes")
-	return splitOnNewline(panes)
-end
-
-local res = tmuxPanes()
-print(vim.inspect(res))
+-- self = self or M
+self = M.setup({})
+self:sendKeys("ls -la")
 
 return M
