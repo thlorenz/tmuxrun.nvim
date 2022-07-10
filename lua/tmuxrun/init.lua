@@ -7,23 +7,10 @@ end
 
 local selector = require("tmuxrun.selector")
 local tmux = require("tmuxrun.tmux")
+local config = require("tmuxrun.config")
 
-local M = { selector = selector, config = {} }
-
--- -----------------
--- Config
--- -----------------
-function M.initConfigValue(self, name, value, default)
-	self.config[name] = value == nil and default or value
-end
-
-function M.setup(self, config)
-	config = config or {}
-
-	self:initConfigValue("clearBeforeSend", config.clearBeforeSend, true)
-	self:initConfigValue("clearSequence", config.clearSequence, "")
-	return self
-end
+local M = { selector = selector }
+local conf = config.values
 
 -- -----------------
 -- Sender
@@ -61,9 +48,7 @@ function M.sendKeys(self, keys)
 		return
 	end
 
-	local allKeys = self.config.clearBeforeSend
-			and self.config.clearSequence .. keys
-		or keys
+	local allKeys = conf.clearBeforeSend and conf.clearSequence .. keys or keys
 	local result = self:_sendKeys(allKeys)
 	if result ~= nil and result ~= "" then
 		return result
@@ -71,8 +56,13 @@ function M.sendKeys(self, keys)
 	return self:sendEnterSequence()
 end
 
+function M.setup(opts)
+	config.setup(opts)
+	return M
+end
+
 -- self = self or M
-self = M:setup({})
+self = M.setup({})
 self:sendKeys("ls -la")
 
 return M
