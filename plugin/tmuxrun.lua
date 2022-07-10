@@ -4,11 +4,14 @@ if 1 ~= vim.fn.has("nvim-0.7.0") then
 end
 
 if vim.g.loaded_tmuxrun == 1 then
-	return
+	-- return
 end
 vim.g.loaded_tmuxrun = 1
 
-vim.api.nvim_create_user_command("VVtrSendCommandToRunner", function(opts) 
-  print("VtrSendCommandToRunner")
-  print(vim.inspect(opts))
+local require = require("tmuxrun.utils").re_require
+local api = require("tmuxrun.api")
+
+-- May alias to VtrAttachToPane
+vim.api.nvim_create_user_command("TrSelectTarget", function(opts)
+	return api.selectTarget()
 end, {})
