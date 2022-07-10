@@ -1,167 +1,78 @@
-local M = {
-	session,
-	window,
-	pane,
-}
-
 function re_require(pack)
 	package.loaded[pack] = nil
 	return require(pack)
 end
 
-local require = re_require
-local sessions = require("tmuxrun.sessions")
+-- local require = re_require
+
+local selector = require("tmuxrun.selector")
 local tmux = require("tmuxrun.tmux")
-local utils = require("tmuxrun.utils")
 
--- @returns the selected session or nil if the user aborted or provided invalid input
-function M.selectSession(self, notifySuccess)
-	local sessionNames, msg = sessions:sessionNamesAndMsg(
-		self.session and self.session.name
+local M = { selector = selector, config = {} }
+
+-- -----------------
+-- Config
+-- -----------------
+function M.initConfigValue(self, name, value, default)
+	self.config[name] = value == nil and default or value
+end
+
+function M.setup(self, config)
+	config = config or {}
+
+	self:initConfigValue("clearBeforeSend", config.clearBeforeSend, true)
+	self:initConfigValue("clearSequence", config.clearSequence, "")
+	return self
+end
+
+-- -----------------
+-- Sender
+-- -----------------
+
+-- Adds a pane to target with a command via the `-t` flag
+local function targetedTmuxCommand(command, targetPane)
+	return command .. " -t " .. targetPane
+end
+
+function M._sendKeys(self, keys)
+	assert(
+		self.selector:hasTarget(),
+		"should have selected session, window and pane"
 	)
+	local cmd = "send-keys -t "
+		.. self.selector:tmuxTargetString()
+		.. " "
+		.. keys:gsub(" ", " Space ")
 
-	local input = vim.fn.input(msg .. "\nSession#: ")
-	if #input == 0 then
-		if self.session == nil then
-			vim.notify("No session selected", "warn")
-		else
-			if notifySuccess then
-				vim.notify(
-					"Kept current session '"
-						.. self.session.name
-						.. "' selected",
-					"info"
-				)
-			end
-		end
-		return self.session
-	end
-	local sessionIdx = input:match("^(%d+)")
-
-	if sessionIdx ~= nil then
-		sessionIdx = tonumber(sessionIdx)
-		local name = sessionNames[sessionIdx]
-		if name == nil then
-			vim.notify("Not a valid session idx: " .. sessionIdx, "warn")
-			return nil
-		else
-			if notifySuccess then
-				vim.notify("Selected tmux session: '" .. name .. "'", "info")
-			end
-			return sessions:getSessionByName(name)
-		end
-	else
-		vim.notify("Please select a session number", "warn")
-		return nil
-	end
+	return tmux.sendTmuxCommand(cmd)
 end
 
-function M.selectWindow(self, session)
-	session = session or self.session
-	if session == nil then
-		vim.notify("Need to select session before selecting a window", "warn")
-		return nil
-	end
-	local windows, msg = sessions:windowListAndMsg(session.name)
-	local input = vim.fn.input(
-		"Session: " .. session.name .. "\n" .. msg .. "\nWindow#: "
-	)
-	if #input == 0 then
-		return sessions:getActiveWindow(session.name)
-	end
-
-	local winIdx = input:match("^(%d+)")
-	if winIdx ~= nil then
-		winIdx = tonumber(winIdx)
-		local win = windows[winIdx]
-		if win == nil then
-			vim.notify("Not a valid window idx: " .. winIdx, "warn")
-			return nil
-		end
-		return win
-	else
-		vim.notify("Please select a window number", "warn")
-		return nil
-	end
+function M.sendEnterSequence(self)
+	self:_sendKeys("Enter")
 end
 
-function M.selectPane(self, session, window)
-	-- showing pane numbers only makes sense if the following is true
-	-- 1. the selected window is active
-	-- 2. the selected session is attached
-	if sessions:isWindowActive(session.name, window.name) then
-		local client = sessions:getClientForSession(session.id)
-		if client ~= nil then
-			local cmd = "display-panes -t " .. client.name .. " -d 800"
-			tmux.sendTmuxCommand(cmd)
-		end
-	end
-	local input = vim.fn.input("\nPane# (1.." .. window.paneCount .. "): ")
-	if #input == 0 then
-		return 1
+function M.sendKeys(self, keys)
+	if not self.selector:hasTarget() then
+		self.selector:selectTarget()
 	end
 
-	local paneIdx = input:match("^(%d+)")
-	if paneIdx ~= nil then
-		paneIdx = tonumber(paneIdx)
-		if paneIdx > window.paneCount then
-			vim.notify(
-				"Not a valid pane idx: "
-					.. paneIdx
-					.. ", defaulting to first pane",
-				"warn"
-			)
-			return 1
-		else
-			return paneIdx
-		end
-	else
-		vim.notify("Invalid idx selected, defaulting to first pane", "warn")
-		return 1
-	end
-end
-
-function M.selectTarget(self, cb)
-	sessions:refresh()
-	local session = self:selectSession(false)
-	if session == nil then
+	-- TODO(thlorenz): allow user to specifty that a pane should open next to the vim pane
+	if not self.selector:hasTarget() then
 		return
 	end
 
-	local window = self:selectWindow(session)
-	if window == nil then
-		return
+	local allKeys = self.config.clearBeforeSend
+			and self.config.clearSequence .. keys
+		or keys
+	local result = self:_sendKeys(allKeys)
+	if result ~= nil and result ~= "" then
+		return result
 	end
-
-	-- Got a valid session and window
-
-	local pane = self:selectPane(session, window)
-	self.session = session
-	self.window = window
-	self.pane = pane
-
-	-- deferring here only to allow session selection output to clear
-	vim.defer_fn(function()
-		if window ~= nil then
-			vim.notify(
-				"Selected window '"
-					.. session.name
-					.. ":"
-					.. window.name
-					.. "'["
-					.. pane
-					.. "]",
-				"warn"
-			)
-			if cb ~= nil then
-				cb()
-			end
-		end
-	end, 0)
+	return self:sendEnterSequence()
 end
 
-self = self or M
--- self = M
-self:selectTarget()
+-- self = self or M
+self = M:setup({})
+self:sendKeys("ls -la")
 
 return M
