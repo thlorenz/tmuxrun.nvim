@@ -29,7 +29,6 @@ function M.sendEnterSequence(self)
 end
 
 function M.sendKeys(self, keys)
-	-- TODO(thlorenz): allow user to specify that a pane should open next to the vim pane
 	if not self.selector:hasTarget() then
 		vim.notify(
 			"Tried to send keys to tmux, but haven't set a target yet, via ':TmuxSelectTarget'",

@@ -227,6 +227,7 @@ function M.selectTarget(self)
 			"warn"
 		)
 	end
+	return createdNewPane
 end
 
 function M.hasTarget(self)
@@ -236,7 +237,5 @@ end
 function M.tmuxTargetString(self)
 	return tmux.targetString(self.session.name, self.window.name, self.pane)
 end
-
--- M:selectTarget()
 
 return M

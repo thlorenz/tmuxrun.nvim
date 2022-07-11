@@ -2,6 +2,7 @@ local api = {}
 
 local selector = require("tmuxrun.selector")
 local runner = require("tmuxrun.runner")
+local conf = require("tmuxrun.config").values
 
 function api.selectTarget()
 	return selector:selectTarget()
@@ -16,10 +17,17 @@ function api.sendCommand(cmd, ensureTarget)
 		ensureTarget = false
 	end
 
+	local createdNewPane = false
 	if ensureTarget and (not selector:hasTarget()) then
-		selector:selectTarget()
+		createdNewPane = selector:selectTarget()
 	end
-	runner:sendKeys(cmd)
+	if createdNewPane then
+		vim.defer_fn(function()
+			runner:sendKeys(cmd)
+		end, conf.newPaneInitTime)
+	else
+		runner:sendKeys(cmd)
+	end
 end
 
 return api
