@@ -16,12 +16,10 @@ local M = {}
 local tmux = require("tmuxrun.tmux")
 local paneSelectorRx = "^%s*(%d+)([hvHV]?)"
 
--- TODO(thlorenz): The newly crated pane keeps focus, we need to switch it
--- back to our vim pane
 local function split(sessionName, windowName, pane, direction, before)
 	local beforeFlag = before and " -b" or ""
 	local target = tmux.targetString(sessionName, windowName, pane)
-	local cmd = "split-window"
+	local cmd = "split-window -d"
 		.. " -t "
 		.. target
 		.. " -"
