@@ -141,7 +141,24 @@ function M.selectPane(self, session, window)
 		window
 	)
 
-	local input = vim.fn.input("\nPane# [" .. panes .. "]: ")
+	local ixPreselected = defaultPaneNumber
+			and "- press enter to pane" .. defaultPaneNumber
+		or "- press enter to add a new pane"
+
+	local ixs = [[
+
+Panes:
+------
+]] .. ixPreselected .. [[
+
+- select existing pane, i.e. 1
+- or create new pane as follows 
+  - 1h splits it horizontally after pane 1
+  - 2v splits it vertically after pane 3
+  - 3H splits it horizontally before pane 3
+  - 2V splits it vertically before pane 2
+  ]]
+	local input = vim.fn.input(ixs .. "\n[" .. panes .. "]: ")
 	if #input == 0 then
 		if defaultPaneNumber ~= nil then
 			return defaultPaneNumber
@@ -154,6 +171,7 @@ function M.selectPane(self, session, window)
 		end
 	end
 
+	-- TODO(thlorenz): handle invalid inputs like <non-existent-pane>v with a warning
 	local paneIdx, createdNewPane = processPaneSelector(
 		session.name,
 		window.name,
