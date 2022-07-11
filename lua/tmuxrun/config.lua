@@ -4,7 +4,6 @@
 local values = {
 	clearBeforeSend = true,
 	clearSequence = "",
-	overrideVtrCommands = true,
 }
 local config = { values = values }
 
@@ -17,7 +16,6 @@ function config.setup(opts)
 
 	config.setValue("clearBeforeSend", opts.clearBeforeSend, true)
 	config.setValue("clearSequence", opts.clearSequence, "")
-	config.setValue("overrideVtrCommands", opts.overrideVtrCommands, true)
 	return self
 end
 
