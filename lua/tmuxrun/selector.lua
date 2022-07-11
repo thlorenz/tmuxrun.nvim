@@ -230,6 +230,12 @@ function M.selectTarget(self)
 	return createdNewPane
 end
 
+function M.unselectTarget(self)
+	self.session = nil
+	self.window = nil
+	self.pane = nil
+end
+
 function M.hasTarget(self)
 	return self.session ~= nil and self.window ~= nil and self.pane ~= nil
 end

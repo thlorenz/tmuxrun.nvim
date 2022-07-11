@@ -8,6 +8,10 @@ function api.selectTarget()
 	return selector:selectTarget()
 end
 
+function api.unselectTarget()
+	return selector:unselectTarget()
+end
+
 function api.sendCommand(cmd, ensureTarget)
 	-- allow non-neovim tools to espress bool via int
 	if ensureTarget == 1 then

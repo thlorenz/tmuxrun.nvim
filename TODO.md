@@ -2,7 +2,7 @@
 
 ## Selector
 
-- [ ] allow _unselecting_ target
+- [x] allow _unselecting_ target
 - [ ] verify that selected target is still valid before sending keys
 - [ ] KillRunnerPane (low priority)
 
