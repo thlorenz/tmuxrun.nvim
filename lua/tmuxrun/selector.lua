@@ -217,11 +217,11 @@ function M.selectTarget(self)
 		local action = createdNewPane and "Created" or "Selected"
 		vim.notify(
 			action
-				.. " 'session:window'[pane] '"
+				.. " pane "
 				.. session.name
 				.. ":"
 				.. window.name
-				.. "'["
+				.. "["
 				.. selectedPane
 				.. "]",
 			"warn"
