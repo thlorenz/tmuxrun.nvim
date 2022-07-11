@@ -161,13 +161,14 @@ Panes:
 	local input = vim.fn.input(ixs .. "\n[" .. panes .. "]: ")
 	if #input == 0 then
 		if defaultPaneNumber ~= nil then
-			return defaultPaneNumber
+			return defaultPaneNumber, false
 		else
 			return processPaneSelector(
 				session.name,
 				window.name,
 				1 .. conf.autoCreatedPaneDirection
-			)
+			),
+				true
 		end
 	end
 
@@ -183,13 +184,13 @@ Panes:
 				"Not a valid pane idx: " .. paneIdx .. ", defaulting pane",
 				"warn"
 			)
-			return defaultPaneNumber or 1
+			return defaultPaneNumber or 1, createdNewPane
 		else
-			return paneIdx
+			return paneIdx, createdNewPane
 		end
 	else
 		vim.notify("Invalid idx selected, defaulting to first pane", "warn")
-		return defaultPaneNumber or 1
+		return defaultPaneNumber or 1, createdNewPane
 	end
 end
 
@@ -198,23 +199,25 @@ function M.selectTarget(self)
 
 	local session = self:selectSession(false)
 	if session == nil then
-		return
+		return false
 	end
 
 	local window = self:selectWindow(session)
 	if window == nil then
-		return
+		return false
 	end
 
 	-- Got a valid session and window
-	local selectedPane = self:selectPane(session, window)
+	local selectedPane, createdNewPane = self:selectPane(session, window)
 	self.session = session
 	self.window = window
 	self.pane = selectedPane
 
 	if window ~= nil then
+		local action = createdNewPane and "Created" or "Selected"
 		vim.notify(
-			"Selected 'session:window'[pane] '"
+			action
+				.. " 'session:window'[pane] '"
 				.. session.name
 				.. ":"
 				.. window.name
