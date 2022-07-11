@@ -4,6 +4,7 @@
 local values = {
 	clearBeforeSend = true,
 	clearSequence = "",
+	autoCreatedPaneDirection = "v", -- or "h"
 }
 local config = { values = values }
 
@@ -16,6 +17,11 @@ function config.setup(opts)
 
 	config.setValue("clearBeforeSend", opts.clearBeforeSend, true)
 	config.setValue("clearSequence", opts.clearSequence, "")
+	config.setValue(
+		"autoCreatedPaneDirection",
+		opts.autoCreatedPaneDirection,
+		"v"
+	)
 	return self
 end
 

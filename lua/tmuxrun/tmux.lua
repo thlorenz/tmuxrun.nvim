@@ -98,4 +98,8 @@ function M.getActiveSessionWindowPane()
 	return { session = session, window = window, pane = pane }
 end
 
+function M.targetString(sessionName, windowName, pane)
+	return sessionName .. ":" .. windowName .. "." .. pane
+end
+
 return M

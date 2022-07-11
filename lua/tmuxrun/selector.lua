@@ -7,6 +7,8 @@ local M = {
 local sessions = require("tmuxrun.sessions")
 local tmux = require("tmuxrun.tmux")
 local utils = require("tmuxrun.utils")
+local processPaneSelector = require("tmuxrun.pane").processPaneSelector
+local conf = require("tmuxrun.config").values
 
 -- @returns the selected session or nil if the user aborted or provided invalid input
 function M.selectSession(self, notifySuccess)
@@ -144,17 +146,21 @@ function M.selectPane(self, session, window)
 		if defaultPaneNumber ~= nil then
 			return defaultPaneNumber
 		else
-			-- If there is only one pane we should just create one vertically or horizontally and then
-			-- return that
-			-- TODO
-			return 1
+			return processPaneSelector(
+				session.name,
+				window.name,
+				1 .. conf.autoCreatedPaneDirection
+			)
 		end
 	end
 
-	local paneIdx = input:match("^(%d+)")
+	local paneIdx, createdNewPane = processPaneSelector(
+		session.name,
+		window.name,
+		input
+	)
 	if paneIdx ~= nil then
-		paneIdx = tonumber(paneIdx)
-		if paneIdx > window.paneCount then
+		if not createdNewPane and paneIdx > window.paneCount then
 			vim.notify(
 				"Not a valid pane idx: " .. paneIdx .. ", defaulting pane",
 				"warn"
@@ -183,10 +189,10 @@ function M.selectTarget(self)
 	end
 
 	-- Got a valid session and window
-	local pane = self:selectPane(session, window)
+	local selectedPane = self:selectPane(session, window)
 	self.session = session
 	self.window = window
-	self.pane = pane
+	self.pane = selectedPane
 
 	if window ~= nil then
 		vim.notify(
@@ -195,7 +201,7 @@ function M.selectTarget(self)
 				.. ":"
 				.. window.name
 				.. "'["
-				.. pane
+				.. selectedPane
 				.. "]",
 			"warn"
 		)
@@ -207,7 +213,7 @@ function M.hasTarget(self)
 end
 
 function M.tmuxTargetString(self)
-	return self.session.name .. ":" .. self.window.name .. "." .. self.pane
+	return tmux.targetString(self.session.name, self.window.name, self.pane)
 end
 
 -- M:selectTarget()
