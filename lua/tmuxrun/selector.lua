@@ -240,6 +240,29 @@ function M.hasTarget(self)
 	return self.session ~= nil and self.window ~= nil and self.pane ~= nil
 end
 
+function M.verifyTarget(self)
+	assert(
+		self.session ~= nil and self.window ~= nil and self.pane ~= nil,
+		"should not call verify target if no complete target was selected"
+	)
+	sessions:refresh()
+	local session = sessions:getSessionById(self.session.id)
+	if session == nil then
+		return false, "session"
+	end
+
+	local window = sessions:getWindowInSessionById(session, self.window.id)
+	if window == nil then
+		return false, "window"
+	end
+
+	if window.paneCount < self.pane then
+		return false, "pane"
+	end
+
+	return true
+end
+
 function M.tmuxTargetString(self)
 	return tmux.targetString(self.session.name, self.window.name, self.pane)
 end

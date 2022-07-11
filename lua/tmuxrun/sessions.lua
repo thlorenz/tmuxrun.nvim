@@ -147,6 +147,13 @@ function M.windowListAndMsg(self, sessionName)
 	return windows, msg
 end
 
+function M.getWindowInSessionById(self, session, windowId)
+	for _, win in pairs(session.windows) do
+		if win.id == windowId then
+			return win
+		end
+	end
+end
 -- -----------------
 -- Clients
 -- -----------------

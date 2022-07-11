@@ -37,6 +37,33 @@ function M.sendKeys(self, keys)
 		return
 	end
 
+	local isTargetValid, missing = self.selector:verifyTarget()
+	if not isTargetValid then
+		local missingDetails
+		if "session" == missing then
+			missingDetails = "Session '" .. self.selector.session.name .. "'"
+		elseif "window" == missing then
+			missingDetails = "Window '"
+				.. self.selector.window.name
+				.. "'"
+				.. " inside session '"
+				.. self.selector.session.name
+				.. "'"
+		elseif "pane" == missing then
+			missingDetails = "Pane '"
+				.. self.selector.pane
+				.. "'"
+				.. " of window '"
+				.. self.selector.window.name
+				.. "'"
+				.. " inside session '"
+				.. self.selector.session.name
+				.. "'"
+		end
+		vim.notify(missingDetails .. " cannot be found.", "warn")
+		vim.notify("Set a new target via: TmuxSelectTarget", "info")
+	end
+
 	local allKeys = conf.clearBeforeSend and conf.clearSequence .. " " .. keys
 		or keys
 	local result = self:_sendKeys(keys)
