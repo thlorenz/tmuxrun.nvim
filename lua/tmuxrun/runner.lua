@@ -24,6 +24,10 @@ function M._sendKeys(self, keys)
 	return tmux.sendTmuxCommand(cmd)
 end
 
+function M.sendClearSequence(self)
+	self:_sendKeys(conf.clearSequence)
+end
+
 function M.sendEnterSequence(self)
 	self:_sendKeys("Enter")
 end
@@ -64,8 +68,10 @@ function M.sendKeys(self, keys)
 		vim.notify("Set a new target via: TmuxSelectTarget", "info")
 	end
 
-	local allKeys = conf.clearBeforeSend and conf.clearSequence .. " " .. keys
-		or keys
+	if conf.clearBeforeSend then
+		self:sendClearSequence()
+	end
+
 	local result = self:_sendKeys(keys)
 	if result ~= nil and result ~= "" then
 		return result
