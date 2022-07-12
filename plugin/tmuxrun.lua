@@ -20,7 +20,7 @@ vim.api.nvim_create_user_command("TmuxUnselectTarget", function(opts)
 	api.unselectTarget()
 end, {})
 
-vim.api.nvim_create_user_command("TmuxSendCommand", function(opts)
+vim.api.nvim_create_user_command("TmuxCommand", function(opts)
 	api.sendCommand(opts.args, true)
 end, { nargs = 1 })
 
