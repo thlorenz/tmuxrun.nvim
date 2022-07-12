@@ -2,13 +2,6 @@ local M = {
 	sessions = {},
 }
 
-function re_require(pack)
-	package.loaded[pack] = nil
-	return require(pack)
-end
-
-local require = re_require
-
 local utils = require("tmuxrun.utils")
 local tmux = require("tmuxrun.tmux")
 
@@ -154,6 +147,7 @@ function M.getWindowInSessionById(self, session, windowId)
 		end
 	end
 end
+
 -- -----------------
 -- Clients
 -- -----------------

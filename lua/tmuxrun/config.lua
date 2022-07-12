@@ -10,7 +10,10 @@ local values = {
 	autoCreatedPaneDirection = "v", -- or "h"
 	-- time in milliseconds give new terminal pane to get ready to receive commands
 	newPaneInitTime = 0,
+	-- ensures that the window that a command is sent to comes into view
+	activateTargetWindow = true,
 }
+
 local config = { values = values }
 
 function config.setValue(name, value, default)
@@ -28,6 +31,7 @@ function config.setup(opts)
 		"v"
 	)
 	config.setValue("newPaneInitTime", opts.newPaneInitTime, 0)
+	config.setValue("activateTargetWindow", opts.activateTargetWindow, true)
 	return self
 end
 

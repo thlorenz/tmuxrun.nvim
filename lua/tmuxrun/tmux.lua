@@ -102,4 +102,12 @@ function M.targetString(sessionName, windowName, pane)
 	return sessionName .. ":" .. windowName .. "." .. pane
 end
 
+-- selects a window in a given session which is useful when sending a command to a session and
+-- make sure that the user can see the output without having to switch to that session and
+-- perform that step
+function M.selectWindow(sessionId, windowId)
+	local targetWindow = sessionId .. ":" .. windowId
+	M.sendTmuxCommand("select-window -t '" .. targetWindow .. "'")
+end
+
 return M

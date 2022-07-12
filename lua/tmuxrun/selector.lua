@@ -1,3 +1,9 @@
+-- TODO(thlorenz): since now this module not only handles selection of the target but also
+-- operations related to it it might be a good idea to to the following:
+--
+-- 1. pull the below into a separate state module
+-- 2. have the selector module update that state when a target is selected
+-- 3. have another module use that state for operations related to that target
 local M = {
 	session,
 	window,
@@ -10,6 +16,9 @@ local utils = require("tmuxrun.utils")
 local processPaneSelector = require("tmuxrun.pane").processPaneSelector
 local conf = require("tmuxrun.config").values
 
+-- -----------------
+-- Selecting a Target
+-- -----------------
 -- @returns the selected session or nil if the user aborted or provided invalid input
 function M.selectSession(self, notifySuccess)
 	local active = tmux.getActiveSessionWindowPane()
@@ -265,6 +274,17 @@ end
 
 function M.tmuxTargetString(self)
 	return tmux.targetString(self.session.name, self.window.name, self.pane)
+end
+
+-- -----------------
+-- Operations on already selected target
+-- -----------------
+function M.activateCurrentWindow(self)
+	assert(
+		self:hasTarget(),
+		"should not try to activate current window unless a target was set"
+	)
+	tmux.selectWindow(self.session.id, self.window.id)
 end
 
 return M

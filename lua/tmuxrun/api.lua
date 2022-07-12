@@ -9,6 +9,9 @@ local state = {
 }
 
 local function handleCommand(cmd)
+	if conf.activateTargetWindow then
+		selector:activateCurrentWindow()
+	end
 	runner:sendKeys(cmd)
 	state.lastCommand = cmd
 end

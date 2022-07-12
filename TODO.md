@@ -6,7 +6,9 @@
 - [x] verify that selected target is still valid before sending keys
 - [ ] look into supporting a
   [ui-select](https://github.com/nvim-telescope/telescope-ui-select.nvim) popup instead of
-  gathering info at the bottom of the editor
+  gathering info at the bottom of the editor via `vim.ui.select`
+  - reference implementation [rust tools](https://github.com/simrat39/rust-tools.nvim)
+- [ ] handle selecting windows if names clash (add id to title + select by id)
 - [ ] KillRunnerPane (low priority)
 
 ## Persistence
@@ -26,7 +28,7 @@ root and look for it at startup (configurable) or only when `TmuxLoadTarget` is 
 ## Runner
 
 - [x] repeat last command
-- [ ] bring window to front when sending keys (if its's in the background) configurable
+- [x] bring window to front when sending keys (if its's in the background) configurable
 - [ ] store command history and allow selecting one 
 - [x] clear sequence doesn't really work, prefixing with `clear;` does
 - [ ] SendCtrlD
