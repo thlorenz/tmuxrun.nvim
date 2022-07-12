@@ -23,3 +23,7 @@ end, {})
 vim.api.nvim_create_user_command("TmuxSendCommand", function(opts)
 	api.sendCommand(opts.args, true)
 end, { nargs = 1 })
+
+vim.api.nvim_create_user_command("TmuxRepeatCommand", function(opts)
+	api.repeatCommand(true)
+end, {})

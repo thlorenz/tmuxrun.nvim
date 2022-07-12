@@ -12,6 +12,7 @@
 ## Persistence
 
 - [ ] optionally save last selected target to disk and reload on startup
+- [ ] save command history to disk and reload via command or automatically if so configured
 
 It would be very nice to have multiple setups since they depend on the project.
 Either we key them by the full path to the root of the current vim session or allow users to
@@ -24,12 +25,13 @@ root and look for it at startup (configurable) or only when `TmuxLoadTarget` is 
 
 ## Runner
 
-- [ ] repeat last command
+- [x] repeat last command
 - [ ] bring window to front when sending keys (if its's in the background) configurable
-- [ ] store history of commands and allow selecting
-- [ ] clear sequence doesn't really work, prefixing with `clear;` does
+- [ ] store command history and allow selecting one 
+- [x] clear sequence doesn't really work, prefixing with `clear;` does
 - [ ] SendCtrlD
 - [ ] SendCtrlC
+- [ ] integrate command history with telescope
 
 ## Tmux
 
