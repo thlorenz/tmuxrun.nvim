@@ -31,10 +31,34 @@ end
 
 function M.getSessionNames(self)
 	local names = {}
-	for session, _ in pairs(self.sessions) do
-		table.insert(names, session)
+	for key, _ in pairs(self.sessions) do
+		table.insert(names, key)
 	end
 	return names
+end
+
+function M.getSessionList(self)
+	local list = {}
+	for _, session in pairs(self.sessions) do
+		table.insert(list, session)
+	end
+	return list
+end
+
+function M.sortedSessions(self, comparator)
+	if self.sessions ~= nil then
+		local list = self:getSessionList()
+		table.sort(list, comparator)
+		return list
+	else
+		return nil
+	end
+end
+
+function M.sortedSessionsByName(self)
+	return self:sortedSessions(function(a, b)
+		return a.name < b.name
+	end)
 end
 
 function M.printSessionNames(self)
@@ -43,6 +67,7 @@ function M.printSessionNames(self)
 	print(str)
 end
 
+-- TODO(thlorenz): won't need this after ui.select is done
 function M.sessionNamesAndMsg(self, sessionToDefaultTo)
 	local sessionNames = self:getSessionNames()
 	table.sort(sessionNames)
@@ -56,10 +81,6 @@ function M.sessionNamesAndMsg(self, sessionToDefaultTo)
 		msg = msg .. selectedIndicator .. padded .. ": " .. name .. "\n"
 	end
 	return sessionNames, msg
-end
-
-function M.getSessionAtIdx(self, idx)
-	return self.sessions[idx]
 end
 
 function M.getSessionByName(self, name)
@@ -128,6 +149,7 @@ function M.isWindowActive(self, sessionName, windowName)
 	return activeWindow.name == windowName
 end
 
+-- TODO(thlorenz): won't need this after ui.select is done
 function M.windowListAndMsg(self, sessionName)
 	local windows = self:sortedWindowsByIndex(sessionName)
 	assert(windows, "Windows for session '" .. sessionName .. "' not found")
