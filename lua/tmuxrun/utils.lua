@@ -34,4 +34,16 @@ function M.trim(s)
 	return s:gsub("^%s*(.-)%s*$", "%1")
 end
 
+function M.moveListItem(list, itemToMove, targetIdx)
+	local itemIdx
+	for idx, item in ipairs(list) do
+		if item == itemToMove then
+			itemIdx = idx
+		end
+	end
+
+	table.remove(list, itemIdx)
+	table.insert(list, targetIdx, itemToMove)
+end
+
 return M
