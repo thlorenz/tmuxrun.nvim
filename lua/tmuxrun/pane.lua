@@ -56,8 +56,8 @@ end
 -- - "nV" splits a pane vertically before n and returns n
 -- - "nH" splits a pane vertically before n and returns n
 -- @returns the selected pane index and if a new pane was created
-function M.processPaneSelector(sessionName, windowName, input)
-	local paneIdx, direction = input:match(paneSelectorRx)
+function M.processPaneSelector(sessionName, windowName, selector)
+	local paneIdx, direction = selector:match(paneSelectorRx)
 
 	-- we cannot do anything if the user didn't even provide a valid pane index
 	if paneIdx == nil then
@@ -81,7 +81,7 @@ function M.processPaneSelector(sessionName, windowName, input)
 	if direction == "H" then
 		return M.splitHorizontalBefore(sessionName, windowName, paneIdx), true
 	end
-	if directio == "V" then
+	if direction == "V" then
 		return M.splitVerticalBefore(sessionName, windowName, paneIdx), true
 	end
 
@@ -89,12 +89,33 @@ function M.processPaneSelector(sessionName, windowName, input)
 	assert(
 		false,
 		"'"
-			.. input
+			.. selector
 			.. "'"
 			.. "matched the regex but had an invalid direction '"
 			.. direction
 			.. "'"
 	)
+end
+
+-- If user selected the same session and window that the vim instance is running in then
+-- we don't want to re-use the pane a that it occupies.
+-- Instead we look up if we have more than one pane and if so return any pane
+-- that is not the vim pane.
+-- If there is only one pane and it is our vim session then it returns nil.
+function M.defaultPaneIndex(session, window)
+	local active = tmux.getActivePaneInfo()
+	local defaultPaneNumber
+	if
+		session.id ~= active.sessionId
+		or window.id ~= active.windowId
+		or active.paneIndex ~= 1
+	then
+		return 1
+	elseif window.paneCount > 1 then
+		return 2
+	else
+		return nil
+	end
 end
 
 return M

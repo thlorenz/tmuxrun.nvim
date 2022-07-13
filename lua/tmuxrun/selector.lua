@@ -11,11 +11,12 @@ local M = {
 }
 
 local utils = require("tmuxrun.utils")
-local require = utils.re_require
-utils = require("tmuxrun.utils")
+-- local require = utils.re_require
+-- utils = require("tmuxrun.utils")
 
 local sessions = require("tmuxrun.sessions")
 local tmux = require("tmuxrun.tmux")
+local pane = require("tmuxrun.pane")
 local processPaneSelector = require("tmuxrun.pane").processPaneSelector
 local conf = require("tmuxrun.config").values
 
@@ -290,6 +291,9 @@ function M.activateCurrentWindow(self)
 	tmux.selectWindow(self.session.id, self.window.id)
 end
 
+-- -----------------
+-- New Selector Methods
+-- -----------------
 function M.selectSessionUi(self, cb)
 	local sortedSessions = sessions:sortedSessionsByName()
 
@@ -316,11 +320,11 @@ function M.selectSessionUi(self, cb)
 	end)
 end
 
-function M.selectWindowUi(self, cb)
-	assert(self.session, "Need to select session before selecting a window")
+function M.selectWindowUi(self, session, cb)
+	assert(session, "Need to select session before selecting a window")
 
-	local sortedWindows = sessions:sortedWindowsByIndex(self.session.name)
-	local defaultWindow = sessions:getActiveWindow(self.session.name)
+	local sortedWindows = sessions:sortedWindowsByIndex(session.name)
+	local defaultWindow = sessions:getActiveWindow(session.name)
 	utils.moveListItem(sortedWindows, defaultWindow, 1)
 
 	vim.ui.select(sortedWindows, {
@@ -334,16 +338,106 @@ function M.selectWindowUi(self, cb)
 	end)
 end
 
-function M.selectTargetUi(self)
-	sessions:refresh()
-	self:selectSessionUi(function(session)
-		self.session = session
-		self:selectWindowUi(function(window)
-			print(window.name)
-		end)
+function M.selectPane(self, session, window, cb)
+	assert(session, "Need to select session before selecting a window")
+	assert(window, "Need to select window before selecting a pane")
+
+	local defaultPaneIndex = pane.defaultPaneIndex(session, window)
+	local defaultPaneInfo = {
+		label = "Select Pane: " .. defaultPaneIndex,
+		selector = "" .. defaultPaneIndex,
+	}
+	local paneInfos = { defaultPaneInfo }
+	for i = #paneInfos, window.paneCount do
+		if i ~= defaultPaneIndex then
+			table.insert(paneInfos, {
+				label = "Select Pane: " .. i,
+				selector = "" .. i,
+			})
+		end
+	end
+
+	for i = 1, #paneInfos do
+		table.insert(paneInfos, {
+			label = "Split before Pane " .. i .. " vertically",
+			selector = i .. "V",
+		})
+		table.insert(paneInfos, {
+			label = "Split before Pane " .. i .. " horizontally",
+			selector = i .. "H",
+		})
+		table.insert(paneInfos, {
+			label = "Split after  Pane " .. i .. " vertically",
+			selector = i .. "v",
+		})
+		table.insert(paneInfos, {
+			label = "Split after  Pane " .. i .. " horizontally",
+			selector = i .. "h",
+		})
+	end
+
+	-- work around for ui.select text is not showing until a key is pressed after
+	-- the pane numbers are displayed
+	vim.defer_fn(function()
+		maybeDisplayPanes(session, window)
+	end, 200)
+
+	vim.ui.select(paneInfos, {
+		prompt = "Select Pane",
+		kind = "tmuxrun/panes",
+		format_item = function(paneInfo)
+			return paneInfo.label
+		end,
+	}, function(paneInfo)
+		cb(paneInfo or defaultPaneInfo)
 	end)
 end
 
--- M:selectTargetUi()
+function M.selectTargetUi(self, cb)
+	sessions:refresh()
+	self:selectSessionUi(function(session)
+		self:selectWindowUi(session, function(window)
+			-- TODO(thlorenz): handle session nil
+			self:selectPane(session, window, function(paneInfo)
+				-- TODO(thlorenz): handle window nil
+				local paneIndex, createdNewPane = pane.processPaneSelector(
+					session.name,
+					window.name,
+					paneInfo.selector
+				)
+				self.session = session
+				self.window = window
+				self.pane = paneIndex
+
+				local action = createdNewPane and "Created" or "Selected"
+				vim.notify(
+					action
+						.. " pane "
+						.. session.name
+						.. ":"
+						.. window.name
+						.. "["
+						.. paneIndex
+						.. "]",
+					"info"
+				)
+
+				-- TODO(thlorenz): Evaluate if we could just store and return the pane info
+				-- including the pane id in order to send keys to it directly (not even
+				-- needing session and window)
+				-- - disadvantage: if the pane is removed and another one created in
+				--   same position then that would no longer work
+				-- - advantage: if the pane is moved and/or other panes created before
+				--   it then it will still find the correct pane
+				-- - combining the two might be the best solution, i.e. verifying that
+				--   the pane with the specified id still exists and if not
+				--   auto-selecting the one that has the same index in the window
+				if cb ~= nil then
+					cb(paneIndex)
+				end
+			end)
+		end)
+	end)
+end
 
 return M

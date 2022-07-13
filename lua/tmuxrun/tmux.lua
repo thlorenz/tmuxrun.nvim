@@ -88,6 +88,7 @@ function M.getSessions()
 	return sessions
 end
 
+-- TODO(thlorenz): remove once changed selector ui
 function M.getActiveSessionWindowPane()
 	local cmd = "display-message -p '#S" .. SEP .. "#W" .. SEP .. "#P'"
 	local output = M.sendTmuxCommand(cmd)
@@ -96,6 +97,61 @@ function M.getActiveSessionWindowPane()
 		utils.trim(output)
 	)
 	return { session = session, window = window, pane = pane }
+end
+
+function M.getActivePaneInfo()
+	local cmd = "display-message -p -F "
+		.. "'#{session_name}"
+		.. SEP
+		.. "#{session_id}"
+		.. SEP
+		.. "#{window_name}"
+		.. SEP
+		.. "#{window_id}"
+		.. SEP
+		.. "#{window_index}"
+		.. SEP
+		.. "#{pane_id}"
+		.. SEP
+		.. "#{pane_index}'"
+	local output = M.sendTmuxCommand(cmd)
+	local sessionName, sessionId, windowName, windowId, windowIndex, paneId, paneIndex =
+		utils.split(
+			"^(.+)"
+				.. SEP
+				.. "(.+)"
+				.. SEP
+				.. "(.+)"
+				.. SEP
+				.. "(.+)"
+				.. SEP
+				.. "(.+)"
+				.. SEP
+				.. "(.+)"
+				.. SEP
+				.. "(.+)",
+			utils.trim(output)
+		)
+	assert(
+		sessionName
+			and sessionId
+			and windowName
+			and windowId
+			and windowIndex
+			and paneId
+			and paneIndex,
+		"should get all active pane info"
+	)
+
+	return {
+		sessionName = sessionName,
+		sessionId = sessionId,
+		windowName = windowName,
+		windowId = windowId,
+		windowIndex = windowIndex,
+		paneId = paneId,
+		paneIndex = tonumber(paneIndex),
+	}
 end
 
 function M.targetString(sessionName, windowName, pane)
