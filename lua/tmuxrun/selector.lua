@@ -10,9 +10,12 @@ local M = {
 	pane,
 }
 
+local utils = require("tmuxrun.utils")
+local require = utils.re_require
+utils = require("tmuxrun.utils")
+
 local sessions = require("tmuxrun.sessions")
 local tmux = require("tmuxrun.tmux")
-local utils = require("tmuxrun.utils")
 local processPaneSelector = require("tmuxrun.pane").processPaneSelector
 local conf = require("tmuxrun.config").values
 
@@ -286,5 +289,61 @@ function M.activateCurrentWindow(self)
 	)
 	tmux.selectWindow(self.session.id, self.window.id)
 end
+
+function M.selectSessionUi(self, cb)
+	local sortedSessions = sessions:sortedSessionsByName()
+
+	local defaultSession
+	if self.session ~= nil then
+		defaultSession = self.session
+	else
+		local activeSessionName = tmux.getActiveSessionWindowPane().session
+		assert(activeSessionName, "there should always be an active session")
+		defaultSession = sessions:getSessionByName(activeSessionName)
+	end
+	assert(defaultSession, "should have found a default session")
+
+	utils.moveListItem(sortedSessions, defaultSession, 1)
+
+	vim.ui.select(sortedSessions, {
+		prompt = "Select Session",
+		kind = "tmuxrun/sessions",
+		format_item = function(session)
+			return session.name
+		end,
+	}, function(session)
+		cb(session or defaultSession)
+	end)
+end
+
+function M.selectWindowUi(self, cb)
+	assert(self.session, "Need to select session before selecting a window")
+
+	local sortedWindows = sessions:sortedWindowsByIndex(self.session.name)
+	local defaultWindow = sessions:getActiveWindow(self.session.name)
+	utils.moveListItem(sortedWindows, defaultWindow, 1)
+
+	vim.ui.select(sortedWindows, {
+		prompt = "Select Window",
+		kind = "tmuxrun/windows",
+		format_item = function(window)
+			return window.index .. ":" .. window.name
+		end,
+	}, function(window)
+		cb(window or defaultWindow)
+	end)
+end
+
+function M.selectTargetUi(self)
+	sessions:refresh()
+	self:selectSessionUi(function(session)
+		self.session = session
+		self:selectWindowUi(function(window)
+			print(window.name)
+		end)
+	end)
+end
+
+-- M:selectTargetUi()
 
 return M
