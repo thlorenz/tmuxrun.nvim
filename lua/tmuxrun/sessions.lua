@@ -67,22 +67,6 @@ function M.printSessionNames(self)
 	print(str)
 end
 
--- TODO(thlorenz): won't need this after ui.select is done
-function M.sessionNamesAndMsg(self, sessionToDefaultTo)
-	local sessionNames = self:getSessionNames()
-	table.sort(sessionNames)
-	local msg = "\nSessions:\n" .. "---------\n"
-	for idx, name in pairs(sessionNames) do
-		local selectedIndicator = " "
-		if name == sessionToDefaultTo then
-			selectedIndicator = "*"
-		end
-		local padded = utils.padWith("" .. idx, 3)
-		msg = msg .. selectedIndicator .. padded .. ": " .. name .. "\n"
-	end
-	return sessionNames, msg
-end
-
 function M.getSessionByName(self, name)
 	return self.sessions[name]
 end
@@ -147,19 +131,6 @@ end
 function M.isWindowActive(self, sessionName, windowName)
 	local activeWindow = self:getActiveWindow(sessionName)
 	return activeWindow.name == windowName
-end
-
--- TODO(thlorenz): won't need this after ui.select is done
-function M.windowListAndMsg(self, sessionName)
-	local windows = self:sortedWindowsByIndex(sessionName)
-	assert(windows, "Windows for session '" .. sessionName .. "' not found")
-	local msg = "\nWindows:\n" .. "--------\n"
-	for _, win in pairs(windows) do
-		local activeIndicator = win.active and "*" or " "
-		local padded = utils.padWith("" .. win.index, 2)
-		msg = msg .. activeIndicator .. padded .. ": " .. win.name .. "\n"
-	end
-	return windows, msg
 end
 
 function M.getWindowInSessionById(self, session, windowId)
