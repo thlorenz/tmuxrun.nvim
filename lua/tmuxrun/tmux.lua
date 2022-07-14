@@ -36,6 +36,9 @@ end
 -- }
 -- ```
 -- @returns session/windows table
+--
+-- TODO(thlorenz): keying windows by their name causes issues since their maybe duplicates we
+-- need to key them by window id instead and adapt all other code to honor that
 function M.getSessions()
 	local sessions = {}
 

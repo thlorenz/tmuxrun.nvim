@@ -1,18 +1,5 @@
 local M = {}
 
--- split-window [-bdfhIvPZ] [-c start-directory] [-e environment] [-l size] [-t
---         target-pane] [shell-command] [-F format]
---               (alias: splitw)
---         Create a new pane by splitting target-pane: -h does a horizontal split and -v a
---         vertical split; if neither is specified, -v is assumed.  The -l option specifies
---         the size of the new pane in lines (for vertical split) or in columns (for hori-
---         zontal split); size may be followed by `%' to specify a percentage of the avail-
---         able space.  The -b option causes the new pane to be created to the left of or
---         above target-pane.  The -f option creates a new pane spanning the full window
---         height (with -h) or full window width (with -v), instead of splitting the active
---         pane.  -Z zooms if the window is not zoomed, or keeps it zoomed if already
---         zoomed.
-
 local tmux = require("tmuxrun.tmux")
 local paneSelectorRx = "^%s*(%d+)([hvHV]?)"
 

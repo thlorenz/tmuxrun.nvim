@@ -4,7 +4,7 @@ if 1 ~= vim.fn.has("nvim-0.7.0") then
 end
 
 if vim.g.loaded_tmuxrun == 1 then
-	-- return
+	return
 end
 vim.g.loaded_tmuxrun = 1
 
