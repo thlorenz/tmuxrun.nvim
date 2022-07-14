@@ -17,7 +17,7 @@ local function handleCommand(cmd)
 end
 
 function api.selectTarget()
-	selector:selectTargetUi(cb)
+	selector:selectTarget(cb)
 end
 
 function api.unselectTarget()
@@ -45,7 +45,7 @@ function api.sendCommand(cmd, ensureTarget)
 
 	local createdNewPane = false
 	if ensureTarget and (not selector:hasTarget()) then
-		selector:selectTargetUi(function(createdNewPane)
+		selector:selectTarget(function(createdNewPane)
 			_onEnsuredTarget(cmd, createdNewPane)
 		end)
 	else
