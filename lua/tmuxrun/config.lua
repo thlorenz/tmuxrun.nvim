@@ -12,6 +12,11 @@ local values = {
 	newPaneInitTime = 0,
 	-- ensures that the window that a command is sent to comes into view
 	activateTargetWindow = true,
+	-- ensures target when sending a command unless it is overriden for the particular call
+	ensureTarget = true,
+	-- Stores 'Up' sent via :TmuxUp as lastCommand such that :TmuxRepeatCommand will send 'Up'.
+	-- Set this to false if you only want to store only commands sent via :TmuxCommand
+	storeUpCommand = true,
 }
 
 local config = { values = values }
@@ -32,6 +37,8 @@ function config.setup(opts)
 	)
 	config.setValue("newPaneInitTime", opts.newPaneInitTime, 0)
 	config.setValue("activateTargetWindow", opts.activateTargetWindow, true)
+	config.setValue("ensureTarget", opts.ensureTarget, true)
+	config.setValue("storeUpCommand", opts.storeUpCommand, true)
 	return self
 end
 

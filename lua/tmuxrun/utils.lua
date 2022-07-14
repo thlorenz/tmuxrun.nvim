@@ -46,4 +46,8 @@ function M.moveListItem(list, itemToMove, targetIdx)
 	table.insert(list, targetIdx, itemToMove)
 end
 
+function M.defaultTo(val, default)
+	return val == nil and default or val
+end
+
 return M

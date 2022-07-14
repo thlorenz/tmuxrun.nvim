@@ -10,7 +10,7 @@ local function targetedTmuxCommand(command, targetPane)
 	return command .. " -t " .. targetPane
 end
 
-function M._sendKeys(self, keys)
+function M._sendKeys(self, keys, opts)
 	assert(
 		self.selector:hasTarget(),
 		"should have selected session, window and pane"
@@ -24,11 +24,11 @@ function M._sendKeys(self, keys)
 	return tmux.sendTmuxCommand(cmd)
 end
 
-function M.sendClearSequence(self)
+function M._sendClearSequence(self)
 	self:_sendKeys(conf.clearSequence)
 end
 
-function M.sendEnterSequence(self)
+function M._sendEnterSequence(self)
 	self:_sendKeys("Enter")
 end
 
@@ -69,14 +69,14 @@ function M.sendKeys(self, keys)
 	end
 
 	if conf.clearBeforeSend then
-		self:sendClearSequence()
+		self:_sendClearSequence()
 	end
 
-	local result = self:_sendKeys(keys)
+	local result = self:_sendKeys(keys, opts)
 	if result ~= nil and result ~= "" then
 		return result
 	end
-	return self:sendEnterSequence()
+	return self:_sendEnterSequence()
 end
 
 return M

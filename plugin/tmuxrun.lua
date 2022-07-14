@@ -21,9 +21,13 @@ vim.api.nvim_create_user_command("TmuxUnselectTarget", function(opts)
 end, {})
 
 vim.api.nvim_create_user_command("TmuxCommand", function(opts)
-	api.sendCommand(opts.args, true)
+	api.sendCommand(opts.args)
 end, { nargs = 1 })
 
+vim.api.nvim_create_user_command("TmuxUp", function(opts)
+	api.sendUp()
+end, {})
+
 vim.api.nvim_create_user_command("TmuxRepeatCommand", function(opts)
-	api.repeatCommand(true)
+	api.repeatCommand()
 end, {})
