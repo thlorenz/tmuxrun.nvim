@@ -433,7 +433,7 @@ function M.selectTargetUi(self, cb)
 				--   the pane with the specified id still exists and if not
 				--   auto-selecting the one that has the same index in the window
 				if cb ~= nil then
-					cb(paneIndex)
+					cb(createdNewPane)
 				end
 			end)
 		end)
