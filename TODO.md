@@ -37,6 +37,9 @@ root and look for it at startup (configurable) or only when `TmuxLoadTarget` is 
 - [ ] resolve things like `%` (to current path) configurable
 - [ ] SendCtrlD
 - [ ] SendCtrlC
+- [ ] SendUp (repeats whatever was executed last in the pane)
+  - this is very useful when a command was executed in the pane already and we just want to
+    repeat it without copy/pasting it and send via `TmuxCommand`
 - [ ] integrate command history with telescope
 - [ ] should not protect vim pane if we selected another session
   - which means that we want to be able to select a pane with the same number as our vim pane
