@@ -50,4 +50,27 @@ function M.defaultTo(val, default)
 	return val == nil and default or val
 end
 
+-- lua patterns aren't really regexes and thus don't support the | operator 🤯
+local BEFORE = "(.*%s)"
+local AFTER = "(%s?.*)"
+local pathIdentifierRx1 = BEFORE .. "(%%:[phtre])" .. AFTER
+local pathIdentifierRx2 = BEFORE .. "(%%)" .. AFTER
+local pathIdentifierRx3 = BEFORE .. "(#)" .. AFTER
+
+function M.resolveVimPathIdentifiers(cmd)
+	-- TODO(thlorenz): use gmatch here in order to replace multiple occurrences if use cases
+	-- arise
+	local bef, pathId, aft = cmd:match(pathIdentifierRx1)
+	if bef == nil then
+		bef, pathId, aft = cmd:match(pathIdentifierRx2)
+	end
+	if bef == nil then
+		bef, pathId, aft = cmd:match(pathIdentifierRx3)
+	end
+	if bef == nil then
+		return cmd
+	end
+	return bef .. vim.fn.expand(pathId) .. aft
+end
+
 return M

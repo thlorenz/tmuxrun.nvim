@@ -89,6 +89,7 @@ function M.selectPane(self, session, window, cb)
 	assert(window, "Need to select window before selecting a pane")
 
 	local defaultPaneIndex = pane.defaultPaneIndex(session, window)
+	-- TODO(thlorenz): handle case where defaultPaneIndex is nil
 	local defaultPaneInfo = {
 		label = "Select Pane: " .. defaultPaneIndex,
 		selector = "" .. defaultPaneIndex,

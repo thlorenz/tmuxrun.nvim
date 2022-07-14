@@ -41,6 +41,8 @@ end
 function api.sendCommand(cmd, opts)
 	opts = opts or {}
 
+	cmd = utils.resolveVimPathIdentifiers(cmd)
+
 	opts.storeCommand = utils.defaultTo(opts.storeCommand, true)
 	local ensureTarget = opts.ensureTarget or conf.ensureTarget
 

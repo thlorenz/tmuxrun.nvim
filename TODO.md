@@ -9,6 +9,8 @@
   gathering info at the bottom of the editor via `vim.ui.select`
   - reference implementation [rust tools](https://github.com/simrat39/rust-tools.nvim)
 - [x] handle selecting windows if names clash (add id to title + select by id)
+- [ ] handle case where we only have one pane and it is our vim session in which case the
+  `defaultPaneIndex` comes back as `nil` (selector.lua:91)
 - [ ] KillRunnerPane (low priority)
 
 ## Persistence
@@ -34,7 +36,8 @@ root and look for it at startup (configurable) or only when `TmuxLoadTarget` is 
 - [ ] store command history and allow selecting one 
 - [x] clear sequence doesn't really work, prefixing with `clear;` does
 - [ ] save (current file | all files) before running command configurable
-- [ ] resolve things like `%` (to current path) configurable
+- [x] resolve things like `%` (to current path) configurable
+  - only supports replacing one occurrence which should cover 90% of cases
 - [ ] SendCtrlD
 - [ ] SendCtrlC
 - [x] SendUp (repeats whatever was executed last in the pane)
