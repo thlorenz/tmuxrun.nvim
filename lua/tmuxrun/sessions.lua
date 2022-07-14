@@ -128,9 +128,9 @@ function M.getActiveWindow(self, sessionName)
 	assert(false, "Each session should have an active window")
 end
 
-function M.isWindowActive(self, sessionName, windowName)
+function M.isWindowActive(self, sessionName, windowId)
 	local activeWindow = self:getActiveWindow(sessionName)
-	return activeWindow.name == windowName
+	return activeWindow.id == windowId
 end
 
 function M.getWindowInSessionById(self, session, windowId)
@@ -171,9 +171,5 @@ function M.getClientForSession(self, sessionId)
 		end
 	end
 end
-
--- M:refresh()
--- local client = M:getClientForSession("$16")
--- utils.dump(client)
 
 return M

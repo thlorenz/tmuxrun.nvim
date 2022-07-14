@@ -5,11 +5,6 @@ local conf = config.values
 
 local M = { selector = selector }
 
--- Adds a pane to target with a command via the `-t` flag
-local function targetedTmuxCommand(command, targetPane)
-	return command .. " -t " .. targetPane
-end
-
 function M._sendKeys(self, keys, opts)
 	assert(
 		self.selector:hasTarget(),

@@ -24,8 +24,9 @@ end
 --   session1: {
 --     id: string
 --     name: string
---     window1: {
+--     window1Id: {
 --       id: string
+--       name: string
 --       index: number
 --       active = bool
 --       paneCount = number
@@ -37,8 +38,6 @@ end
 -- ```
 -- @returns session/windows table
 --
--- TODO(thlorenz): keying windows by their name causes issues since their maybe duplicates we
--- need to key them by window id instead and adapt all other code to honor that
 function M.getSessions()
 	local sessions = {}
 
@@ -80,7 +79,7 @@ function M.getSessions()
 			)
 		sessions[session] = sessions[session]
 			or { id = sessionId, name = session, windows = {} }
-		sessions[session].windows[window] = {
+		sessions[session].windows[windowId] = {
 			id = windowId,
 			index = tonumber(windowIdx),
 			name = window,
@@ -91,7 +90,6 @@ function M.getSessions()
 	return sessions
 end
 
--- TODO(thlorenz): remove once changed selector ui
 function M.getActiveSessionWindowPane()
 	local cmd = "display-message -p '#S" .. SEP .. "#W" .. SEP .. "#P'"
 	local output = M.sendTmuxCommand(cmd)
@@ -157,8 +155,8 @@ function M.getActivePaneInfo()
 	}
 end
 
-function M.targetString(sessionName, windowName, pane)
-	return sessionName .. ":" .. windowName .. "." .. pane
+function M.targetString(sessionName, windowId, pane)
+	return sessionName .. ":" .. windowId .. "." .. pane
 end
 
 -- selects a window in a given session which is useful when sending a command to a session and

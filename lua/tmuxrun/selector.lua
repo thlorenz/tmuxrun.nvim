@@ -24,7 +24,7 @@ local function maybeDisplayPanes(session, window)
 	-- showing pane numbers only makes sense if the following is true
 	-- 1. the selected window is active
 	-- 2. the selected session is attached
-	if sessions:isWindowActive(session.name, window.name) then
+	if sessions:isWindowActive(session.name, window.id) then
 		local client = sessions:getClientForSession(session.id)
 		if client ~= nil then
 			local cmd = "display-panes -t " .. client.name .. " -N -b -d 5000"
@@ -163,7 +163,7 @@ function M.selectTarget(self, cb)
 			self:selectPane(session, window, function(paneInfo)
 				local paneIndex, createdNewPane = pane.processPaneSelector(
 					session.name,
-					window.name,
+					window.id,
 					paneInfo.selector
 				)
 				self.session = session
@@ -239,7 +239,7 @@ function M.verifyTarget(self)
 end
 
 function M.tmuxTargetString(self)
-	return tmux.targetString(self.session.name, self.window.name, self.pane)
+	return tmux.targetString(self.session.name, self.window.id, self.pane)
 end
 
 -- -----------------

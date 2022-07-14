@@ -3,9 +3,9 @@ local M = {}
 local tmux = require("tmuxrun.tmux")
 local paneSelectorRx = "^%s*(%d+)([hvHV]?)"
 
-local function split(sessionName, windowName, pane, direction, before)
+local function split(sessionName, windowId, pane, direction, before)
 	local beforeFlag = before and " -b" or ""
-	local target = tmux.targetString(sessionName, windowName, pane)
+	local target = tmux.targetString(sessionName, windowId, pane)
 	local cmd = "split-window -d"
 		.. " -t "
 		.. target
@@ -15,23 +15,23 @@ local function split(sessionName, windowName, pane, direction, before)
 	tmux.sendTmuxCommand(cmd)
 end
 
-function M.splitVertical(sessionName, windowName, pane)
-	split(sessionName, windowName, pane, "v", false)
+function M.splitVertical(sessionName, windowId, pane)
+	split(sessionName, windowId, pane, "v", false)
 	return pane + 1
 end
 
-function M.splitHorizontal(sessionName, windowName, pane)
-	split(sessionName, windowName, pane, "h", false)
+function M.splitHorizontal(sessionName, windowId, pane)
+	split(sessionName, windowId, pane, "h", false)
 	return pane + 1
 end
 
-function M.splitVerticalBefore(sessionName, windowName, pane)
-	split(sessionName, windowName, pane, "v", true)
+function M.splitVerticalBefore(sessionName, windowId, pane)
+	split(sessionName, windowId, pane, "v", true)
 	return pane
 end
 
-function M.splitHorizontalBefore(sessionName, windowName, pane)
-	split(sessionName, windowName, pane, "h", true)
+function M.splitHorizontalBefore(sessionName, windowId, pane)
+	split(sessionName, windowId, pane, "h", true)
 	return pane
 end
 
@@ -43,7 +43,7 @@ end
 -- - "nV" splits a pane vertically before n and returns n
 -- - "nH" splits a pane vertically before n and returns n
 -- @returns the selected pane index and if a new pane was created
-function M.processPaneSelector(sessionName, windowName, selector)
+function M.processPaneSelector(sessionName, windowId, selector)
 	local paneIdx, direction = selector:match(paneSelectorRx)
 
 	-- we cannot do anything if the user didn't even provide a valid pane index
@@ -58,18 +58,18 @@ function M.processPaneSelector(sessionName, windowName, selector)
 
 	-- user provided `<num>h` or `<num>v` which means split a new pane after the index
 	if direction == "h" then
-		return M.splitHorizontal(sessionName, windowName, paneIdx), true
+		return M.splitHorizontal(sessionName, windowId, paneIdx), true
 	end
 	if direction == "v" then
-		return M.splitVertical(sessionName, windowName, paneIdx), true
+		return M.splitVertical(sessionName, windowId, paneIdx), true
 	end
 
 	-- user provided `<num>H` or `<num>V` which means split a new pane before the index
 	if direction == "H" then
-		return M.splitHorizontalBefore(sessionName, windowName, paneIdx), true
+		return M.splitHorizontalBefore(sessionName, windowId, paneIdx), true
 	end
 	if direction == "V" then
-		return M.splitVerticalBefore(sessionName, windowName, paneIdx), true
+		return M.splitVerticalBefore(sessionName, windowId, paneIdx), true
 	end
 
 	-- This should NEVER happen unless your's truly screwed up
