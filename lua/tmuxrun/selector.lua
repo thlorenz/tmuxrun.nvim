@@ -103,6 +103,10 @@ function M.selectPane(self, session, window, cb)
 		end
 	end
 
+	-- TODO(thlorenz): the selector being a string that has to be matched with a
+	-- regex further on is mainly due to how this involved. When we have some
+	-- time we should refactor this into a proper data type instead,
+	-- i.e. selector = { pane = i, split = 'vertical' | 'horizontal' | nil }
 	for i = 1, #paneInfos do
 		table.insert(paneInfos, {
 			label = "Split before Pane " .. i .. " vertically",
@@ -143,9 +147,20 @@ function M.selectTarget(self, cb)
 	sessions:refresh()
 	self:selectSession(function(session)
 		self:selectWindow(session, function(window)
-			-- TODO(thlorenz): handle session nil
+			if session == nil then
+				-- We don't know what to do if the user decided to either abort the
+				-- selection or selected an invalid session, better to just stop the whole operation
+				--
+				-- NOTE: that the existing settings aren't updated until a complete
+				--       valid selection has been made of session, window and pane
+				return
+			end
+			if window == nil then
+				-- As for an invalid session, there isn't much we can do here, thus we
+				-- just get out of the way
+				return
+			end
 			self:selectPane(session, window, function(paneInfo)
-				-- TODO(thlorenz): handle window nil
 				local paneIndex, createdNewPane = pane.processPaneSelector(
 					session.name,
 					window.name,
