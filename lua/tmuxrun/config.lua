@@ -7,7 +7,8 @@ local values = {
 	-- clear sequence to use for the above
 	clearSequence = "",
 	-- in which direction to create a pane when tmuxrun creates it automatically
-	autoCreatedPaneDirection = "v", -- or "h"
+	-- change to '{ placement = "after", direction = "horizontal" }' to split horizontally
+	autoSplitPane = { placement = "after", direction = "vertical" },
 	-- time in milliseconds give new terminal pane to get ready to receive commands
 	newPaneInitTime = 0,
 	-- ensures that the window that a command is sent to comes into view
@@ -31,9 +32,9 @@ function config.setup(opts)
 	config.setValue("clearBeforeSend", opts.clearBeforeSend, true)
 	config.setValue("clearSequence", opts.clearSequence, "")
 	config.setValue(
-		"autoCreatedPaneDirection",
-		opts.autoCreatedPaneDirection,
-		"v"
+		"autoSplitPane",
+		opts.autoSplitPane,
+		{ placement = "after", direction = "vertical" }
 	)
 	config.setValue("newPaneInitTime", opts.newPaneInitTime, 0)
 	config.setValue("activateTargetWindow", opts.activateTargetWindow, true)

@@ -88,43 +88,53 @@ function M.selectPane(self, session, window, cb)
 	assert(session, "Need to select session before selecting a window")
 	assert(window, "Need to select window before selecting a pane")
 
-	local defaultPaneIndex = pane.defaultPaneIndex(session, window)
-	-- TODO(thlorenz): handle case where defaultPaneIndex is nil
-	local defaultPaneInfo = {
-		label = "Select Pane: " .. defaultPaneIndex,
-		selector = "" .. defaultPaneIndex,
-	}
+	local defaultPaneIndex, firstPaneBlocked = pane.defaultPaneIndex(
+		session,
+		window
+	)
+	local defaultPaneInfo
+	if defaultPaneIndex == nil then
+		-- when this vim session is in a window with just that one pane then we need
+		-- to create a new one
+		defaultPaneInfo = {
+			label = pane.labelPaneSelector(1, conf.autoSplitPane),
+			pane = 1,
+			split = conf.autoSplitPane,
+		}
+	else
+		defaultPaneInfo = {
+			label = pane.labelPaneSelector(defaultPaneIndex),
+			pane = defaultPaneIndex,
+		}
+	end
 	local paneInfos = { defaultPaneInfo }
 	for i = #paneInfos, window.paneCount do
-		if i ~= defaultPaneIndex then
+		if i ~= defaultPaneIndex and (not firstPaneBlocked or i ~= 1) then
 			table.insert(paneInfos, {
-				label = "Select Pane: " .. i,
-				selector = "" .. i,
+				label = pane.labelPaneSelector(i),
+				pane = i,
 			})
 		end
 	end
 
-	-- TODO(thlorenz): the selector being a string that has to be matched with a
-	-- regex further on is mainly due to how this involved. When we have some
-	-- time we should refactor this into a proper data type instead,
-	-- i.e. selector = { pane = i, split = 'vertical' | 'horizontal' | nil }
-	for i = 1, #paneInfos do
-		table.insert(paneInfos, {
-			label = "Split before Pane " .. i .. " vertically",
-			selector = i .. "V",
-		})
-		table.insert(paneInfos, {
-			label = "Split before Pane " .. i .. " horizontally",
-			selector = i .. "H",
-		})
-		table.insert(paneInfos, {
-			label = "Split after  Pane " .. i .. " vertically",
-			selector = i .. "v",
-		})
-		table.insert(paneInfos, {
-			label = "Split after  Pane " .. i .. " horizontally",
-			selector = i .. "h",
-		})
+	for i = 1, window.paneCount do
+		for _, split in ipairs(pane.splitInfos) do
+			local dsplit = defaultPaneInfo.split
+			if
+				defaultPaneInfo.pane ~= i
+				or (
+					dsplit == nil
+					or dsplit.placement ~= split.placement
+					or dsplit.direction ~= split.direction
+				)
+			then
+				table.insert(paneInfos, {
+					label = pane.labelPaneSelector(i, split),
+					pane = i,
+					split = split,
+				})
+			end
+		end
 	end
 
 	-- work around for ui.select text is not showing until a key is pressed after
@@ -165,7 +175,8 @@ function M.selectTarget(self, cb)
 				local paneIndex, createdNewPane = pane.processPaneSelector(
 					session.name,
 					window.id,
-					paneInfo.selector
+					paneInfo.pane,
+					paneInfo.split
 				)
 				self.session = session
 				self.window = window
@@ -252,6 +263,13 @@ function M.activateCurrentWindow(self)
 		"should not try to activate current window unless a target was set"
 	)
 	tmux.selectWindow(self.session.id, self.window.id)
+end
+
+-- -----------------
+-- Tests
+-- -----------------
+if utils.isMain() then
+	M:selectTarget()
 end
 
 return M

@@ -35,54 +35,64 @@ function M.splitHorizontalBefore(sessionName, windowId, pane)
 	return pane
 end
 
--- This matches user input expressing how to select and/or split a pane.
--- The following three options exist (n being a pane idx):
--- - "n" returns n
--- - "nv" splits a pane vertically after n and returns n+1
--- - "nh" splits a pane vertically after n and returns n+1
--- - "nV" splits a pane vertically before n and returns n
--- - "nH" splits a pane vertically before n and returns n
 -- @returns the selected pane index and if a new pane was created
-function M.processPaneSelector(sessionName, windowId, selector)
-	local paneIdx, direction = selector:match(paneSelectorRx)
-
+function M.processPaneSelector(sessionName, windowId, paneIdx, split)
 	-- we cannot do anything if the user didn't even provide a valid pane index
 	if paneIdx == nil then
 		return nil, false
 	end
 
-	paneIdx = tonumber(paneIdx)
-	if direction == nil or direction == "" then
+	if split == nil then
 		return paneIdx, false
 	end
 
-	-- user provided `<num>h` or `<num>v` which means split a new pane after the index
-	if direction == "h" then
+	if split.placement == "after" and split.direction == "horizontal" then
 		return M.splitHorizontal(sessionName, windowId, paneIdx), true
 	end
-	if direction == "v" then
+	if split.placement == "after" and split.direction == "vertical" then
 		return M.splitVertical(sessionName, windowId, paneIdx), true
 	end
 
-	-- user provided `<num>H` or `<num>V` which means split a new pane before the index
-	if direction == "H" then
+	-- all remaining splits are 'before'
+	if split.direction == "horizontal" then
 		return M.splitHorizontalBefore(sessionName, windowId, paneIdx), true
 	end
-	if direction == "V" then
+	if split.direction == "vertical" then
 		return M.splitVerticalBefore(sessionName, windowId, paneIdx), true
 	end
 
-	-- This should NEVER happen unless your's truly screwed up
+	-- This should NEVER happen unless the autoSplitPane configuration is invalid
 	assert(
 		false,
 		"'"
-			.. selector
+			.. vim.inspect(split)
 			.. "'"
-			.. "matched the regex but had an invalid direction '"
-			.. direction
+			.. "has an invalid direction '"
+			.. split.direction
 			.. "'"
 	)
 end
+
+function M.labelPaneSelector(paneIndex, split)
+	if split == nil then
+		return "Select Pane: " .. paneIndex
+	else
+		return "Split "
+			.. split.placement
+			.. " Pane "
+			.. paneIndex
+			.. " "
+			.. split.direction
+			.. "ly"
+	end
+end
+
+M.splitInfos = {
+	{ placement = "after", direction = "horizontal" },
+	{ placement = "after", direction = "vertical" },
+	{ placement = "before", direction = "horizontal" },
+	{ placement = "before", direction = "vertical" },
+}
 
 -- If user selected the same session and window that the vim instance is running in then
 -- we don't want to re-use the pane a that it occupies.
@@ -97,11 +107,11 @@ function M.defaultPaneIndex(session, window)
 		or window.id ~= active.windowId
 		or active.paneIndex ~= 1
 	then
-		return 1
+		return 1, false
 	elseif window.paneCount > 1 then
-		return 2
+		return 2, true
 	else
-		return nil
+		return nil, true
 	end
 end
 
