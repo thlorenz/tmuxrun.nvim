@@ -34,6 +34,10 @@ function M.trim(s)
 	return s:gsub("^%s*(.-)%s*$", "%1")
 end
 
+function M.trimEnd(s)
+	return s:gsub("(.-)%s*$", "%1")
+end
+
 function M.moveListItem(list, itemToMove, targetIdx)
 	local itemIdx
 	for idx, item in ipairs(list) do
@@ -50,27 +54,46 @@ function M.defaultTo(val, default)
 	return val == nil and default or val
 end
 
--- lua patterns aren't really regexes and thus don't support the | operator 🤯
-local BEFORE = "(.*%s)"
-local AFTER = "(%s?.*)"
-local pathIdentifierRx1 = BEFORE .. "(%%:[phtre])" .. AFTER
-local pathIdentifierRx2 = BEFORE .. "(%%)" .. AFTER
-local pathIdentifierRx3 = BEFORE .. "(#)" .. AFTER
+local pathIdentifierRx1 = "(%%:[phtre]:[phtre]:[phtre]:[phtre]:[phtre])"
+local pathIdentifierRx2 = "(%%:[phtre]:[phtre]:[phtre]:[phtre])"
+local pathIdentifierRx3 = "(%%:[phtre]:[phtre]:[phtre])"
+local pathIdentifierRx4 = "(%%:[phtre]:[phtre])"
+local pathIdentifierRx5 = "(%%:[phtre])"
+local pathIdentifierRx6 = "(%%)"
+local pathIdentifierRx7 = "(#)"
 
 function M.resolveVimPathIdentifiers(cmd)
-	-- TODO(thlorenz): use gmatch here in order to replace multiple occurrences if use cases
-	-- arise
-	local bef, pathId, aft = cmd:match(pathIdentifierRx1)
-	if bef == nil then
-		bef, pathId, aft = cmd:match(pathIdentifierRx2)
-	end
-	if bef == nil then
-		bef, pathId, aft = cmd:match(pathIdentifierRx3)
-	end
-	if bef == nil then
-		return cmd
-	end
-	return bef .. vim.fn.expand(pathId) .. aft
+	cmd = cmd .. " "
+	cmd = cmd:gsub(pathIdentifierRx1, vim.fn.expand)
+	cmd = cmd:gsub(pathIdentifierRx2, vim.fn.expand)
+	cmd = cmd:gsub(pathIdentifierRx3, vim.fn.expand)
+	cmd = cmd:gsub(pathIdentifierRx4, vim.fn.expand)
+	cmd = cmd:gsub(pathIdentifierRx5, vim.fn.expand)
+	cmd = cmd:gsub(pathIdentifierRx6, vim.fn.expand)
+	cmd = cmd:gsub(pathIdentifierRx7, vim.fn.expand)
+	return M.trimEnd(cmd)
+end
+
+function M.isMain()
+	return not pcall(debug.getlocal, 4, 1)
+end
+
+-- -----------------
+-- Tests
+-- -----------------
+if M.isMain() then
+	print(
+		M.resolveVimPathIdentifiers("echo testing % && luajit % --test") .. "'"
+	)
+
+	print(M.resolveVimPathIdentifiers("luajit %:p") .. "'")
+	print(M.resolveVimPathIdentifiers("luajit # --other-flag") .. "'")
+
+	print(
+		M.resolveVimPathIdentifiers(
+			"echo testing %:p:t && echo extension: %:p:e --test"
+		) .. "'"
+	)
 end
 
 return M
