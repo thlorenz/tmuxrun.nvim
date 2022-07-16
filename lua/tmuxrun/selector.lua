@@ -88,10 +88,13 @@ function M.selectPane(self, session, window, cb)
 	assert(session, "Need to select session before selecting a window")
 	assert(window, "Need to select window before selecting a pane")
 
-	local defaultPaneIndex, firstPaneBlocked = pane.defaultPaneIndex(
+	local defaultPaneIndex = pane.defaultPaneIndex(session, window)
+
+	local allPaneIndexes, availablePaneIndexes = pane.availablePaneIndexes(
 		session,
 		window
 	)
+
 	local defaultPaneInfo
 	if defaultPaneIndex == nil then
 		-- when this vim session is in a window with just that one pane then we need
@@ -107,9 +110,11 @@ function M.selectPane(self, session, window, cb)
 			pane = defaultPaneIndex,
 		}
 	end
+
+	-- panes we can use as target directly
 	local paneInfos = { defaultPaneInfo }
-	for i = #paneInfos, window.paneCount do
-		if i ~= defaultPaneIndex and (not firstPaneBlocked or i ~= 1) then
+	for _, i in ipairs(availablePaneIndexes) do
+		if i ~= defaultPaneIndex then
 			table.insert(paneInfos, {
 				label = pane.labelPaneSelector(i),
 				pane = i,
@@ -117,7 +122,8 @@ function M.selectPane(self, session, window, cb)
 		end
 	end
 
-	for i = 1, window.paneCount do
+	-- panes that we can split the target from
+	for _, i in ipairs(allPaneIndexes) do
 		for _, split in ipairs(pane.splitInfos) do
 			local dsplit = defaultPaneInfo.split
 			if

@@ -9,13 +9,13 @@
   gathering info at the bottom of the editor via `vim.ui.select`
   - reference implementation [rust tools](https://github.com/simrat39/rust-tools.nvim)
 - [x] handle selecting windows if names clash (add id to title + select by id)
-- [ ] handle case where we only have one pane and it is our vim session in which case the
+- [x] handle case where we only have one pane and it is our vim session in which case the
   `defaultPaneIndex` comes back as `nil` (selector.lua:91)
 - [ ] KillRunnerPane (low priority)
 
 ## Persistence
 
-- [ ] optionally save last selected target to disk and reload on startup
+- [-] optionally save last selected target to disk and reload on startup
 - [ ] save command history to disk and reload via command or automatically if so configured
   - there should be two types of histories, one per project and one where we show all commands
     from all projects

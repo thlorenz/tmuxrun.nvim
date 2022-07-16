@@ -107,12 +107,29 @@ function M.defaultPaneIndex(session, window)
 		or window.id ~= active.windowId
 		or active.paneIndex ~= 1
 	then
-		return 1, false
+		return 1
 	elseif window.paneCount > 1 then
-		return 2, true
+		return 2
 	else
-		return nil, true
+		return nil
 	end
+end
+
+-- @returns allPaneIndexes, availablePaneIndexes
+--   - allPaneIndexes are all panes that exist in the window and that we can
+--      split relative to in order to create a target
+--   - availablePaneIndexes are all panes that could be a target
+function M.availablePaneIndexes(session, window)
+	local active = tmux.getActivePaneInfo()
+	local allPaneIndexes = {}
+	local availablePaneIndexes = {}
+	for i = 1, window.paneCount do
+		table.insert(allPaneIndexes, i)
+		if active.paneIndex ~= i then
+			table.insert(availablePaneIndexes, i)
+		end
+	end
+	return allPaneIndexes, availablePaneIndexes
 end
 
 return M
