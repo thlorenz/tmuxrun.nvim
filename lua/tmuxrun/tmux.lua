@@ -29,7 +29,13 @@ end
 --       name: string
 --       index: number
 --       active = bool
---       paneCount = number
+--       panes = { {
+--          id = string
+--          index = number
+--          active = bool
+--          historySize = bool
+--         }
+--       }
 --     }
 --     window2: { .. }
 --   }
@@ -42,7 +48,7 @@ function M.getSessions()
 	local sessions = {}
 
 	-- Get all sessions first
-	local cmd = "list-windows -a -F "
+	local cmd = "list-panes -a -F "
 		.. "'#{session_name}"
 		.. SEP
 		.. "#{session_id}"
@@ -55,37 +61,56 @@ function M.getSessions()
 		.. SEP
 		.. "#{window_active}"
 		.. SEP
-		.. "#{window_panes}'"
+		.. "#{pane_index}"
+		.. SEP
+		.. "#{pane_id}"
+		.. SEP
+		.. "#{pane_active}"
+		.. SEP
+		.. "#{history_size}'"
 
 	local lines = M.getLinesForCommand(cmd)
 
 	for _, line in pairs(lines) do
-		local session, sessionId, window, windowId, windowIdx, windowActive, windowPanes =
+		local session, sessionId, window, windowId, windowIdx, windowActive, paneIndex, paneId, paneActive, historySize =
 			utils.split(
-				"^(.+)"
+				"^(.+)" -- session_name
 					.. SEP
-					.. "(.+)"
+					.. "(.+)" -- session_id
 					.. SEP
-					.. "(.+)"
+					.. "(.+)" -- window_name
 					.. SEP
-					.. "(.+)"
+					.. "(.+)" -- window_id
 					.. SEP
-					.. "(.+)"
+					.. "(.+)" -- window_index
 					.. SEP
-					.. "(.+)"
+					.. "(.+)" -- window_active
 					.. SEP
-					.. "(.+)$",
+					.. "(.+)" -- pane_index
+					.. SEP
+					.. "(.+)" -- pane_id
+					.. SEP
+					.. "(.+)" -- pane_active
+					.. SEP
+					.. "(.+)", -- history_size
 				line
 			)
 		sessions[session] = sessions[session]
 			or { id = sessionId, name = session, windows = {} }
-		sessions[session].windows[windowId] = {
-			id = windowId,
-			index = tonumber(windowIdx),
-			name = window,
-			active = windowActive == "1" and true or false,
-			paneCount = tonumber(windowPanes),
-		}
+		sessions[session].windows[windowId] = sessions[session].windows[windowId]
+			or {
+				id = windowId,
+				index = tonumber(windowIdx),
+				name = window,
+				active = windowActive == "1" and true or false,
+				panes = {},
+			}
+		table.insert(sessions[session].windows[windowId].panes, {
+			id = paneId,
+			index = tonumber(paneIndex),
+			active = paneActive == "1" and true or false,
+			historySize = tonumber(historySize),
+		})
 	end
 	return sessions
 end
@@ -167,4 +192,7 @@ function M.selectWindow(sessionId, windowId)
 	M.sendTmuxCommand("select-window -t '" .. targetWindow .. "'")
 end
 
+if utils.isMain() then
+	vim.pretty_print(M.getSessions())
+end
 return M
