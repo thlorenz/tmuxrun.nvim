@@ -1,6 +1,4 @@
-local api = require("tmuxrun.api")
 local config = require("tmuxrun.config")
-local conf = config.values
 
 local M = {}
 

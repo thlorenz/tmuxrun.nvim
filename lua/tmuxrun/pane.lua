@@ -1,7 +1,6 @@
 local M = {}
 
 local tmux = require("tmuxrun.tmux")
-local paneSelectorRx = "^%s*(%d+)([hvHV]?)"
 
 local function split(sessionName, windowId, pane, direction, before)
 	local beforeFlag = before and " -b" or ""
@@ -36,28 +35,31 @@ function M.splitHorizontalBefore(sessionName, windowId, pane)
 end
 
 -- @returns the selected pane index and if a new pane was created
-function M.processPaneSelector(sessionName, windowId, paneIdx, split)
+function M.processPaneSelector(sessionName, windowId, paneIdx, splitInfo)
 	-- we cannot do anything if the user didn't even provide a valid pane index
 	if paneIdx == nil then
 		return nil, false
 	end
 
-	if split == nil then
+	if splitInfo == nil then
 		return paneIdx, false
 	end
 
-	if split.placement == "after" and split.direction == "horizontal" then
+	if
+		splitInfo.placement == "after"
+		and splitInfo.direction == "horizontal"
+	then
 		return M.splitHorizontal(sessionName, windowId, paneIdx), true
 	end
-	if split.placement == "after" and split.direction == "vertical" then
+	if splitInfo.placement == "after" and splitInfo.direction == "vertical" then
 		return M.splitVertical(sessionName, windowId, paneIdx), true
 	end
 
 	-- all remaining splits are 'before'
-	if split.direction == "horizontal" then
+	if splitInfo.direction == "horizontal" then
 		return M.splitHorizontalBefore(sessionName, windowId, paneIdx), true
 	end
-	if split.direction == "vertical" then
+	if splitInfo.direction == "vertical" then
 		return M.splitVerticalBefore(sessionName, windowId, paneIdx), true
 	end
 
@@ -68,21 +70,21 @@ function M.processPaneSelector(sessionName, windowId, paneIdx, split)
 			.. vim.inspect(split)
 			.. "'"
 			.. "has an invalid direction '"
-			.. split.direction
+			.. splitInfo.direction
 			.. "'"
 	)
 end
 
-function M.labelPaneSelector(paneIndex, split)
-	if split == nil then
+function M.labelPaneSelector(paneIndex, splitInfo)
+	if splitInfo == nil then
 		return "Select Pane: " .. paneIndex
 	else
 		return "Split "
-			.. split.placement
+			.. splitInfo.placement
 			.. " Pane "
 			.. paneIndex
 			.. " "
-			.. split.direction
+			.. splitInfo.direction
 			.. "ly"
 	end
 end
@@ -101,7 +103,6 @@ M.splitInfos = {
 -- If there is only one pane and it is our vim session then it returns nil.
 function M.defaultPaneIndex(session, window)
 	local active = tmux.getActivePaneInfo()
-	local defaultPaneNumber
 	if
 		session.id ~= active.sessionId
 		or window.id ~= active.windowId

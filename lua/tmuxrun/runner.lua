@@ -27,7 +27,7 @@ function M._sendEnterSequence(self)
 	self:_sendKeys("Enter")
 end
 
-function M.sendKeys(self, keys)
+function M.sendKeys(self, keys, opts)
 	if not self.selector:hasTarget() then
 		vim.notify(
 			"Tried to send keys to tmux, but haven't set a target yet, via ':TmuxSelectTarget'",

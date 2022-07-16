@@ -40,7 +40,6 @@ function config.setup(opts)
 	config.setValue("activateTargetWindow", opts.activateTargetWindow, true)
 	config.setValue("ensureTarget", opts.ensureTarget, true)
 	config.setValue("storeUpCommand", opts.storeUpCommand, true)
-	return self
 end
 
 return config

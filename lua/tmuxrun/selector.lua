@@ -5,16 +5,15 @@
 -- 2. have the selector module update that state when a target is selected
 -- 3. have another module use that state for operations related to that target
 local M = {
-	session,
-	window,
-	pane,
+	session = nil,
+	window = nil,
+	pane = nil,
 }
 
 local utils = require("tmuxrun.utils")
 local sessions = require("tmuxrun.sessions")
 local tmux = require("tmuxrun.tmux")
 local pane = require("tmuxrun.pane")
-local processPaneSelector = require("tmuxrun.pane").processPaneSelector
 local conf = require("tmuxrun.config").values
 
 -- -----------------
