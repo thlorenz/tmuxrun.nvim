@@ -192,7 +192,7 @@ function M.selectTarget(self, cb)
 						sessions:getSessionById(session.id),
 						window.id
 					)
-					self.pane = window.panes[paneIndex]
+					self.pane = updatedWindow.panes[paneIndex]
 				else
 					self.pane = paneInfo.pane
 				end
@@ -213,16 +213,6 @@ function M.selectTarget(self, cb)
 					"info"
 				)
 
-				-- TODO(thlorenz): Evaluate if we could just store and return the pane info
-				-- including the pane id in order to send keys to it directly (not even
-				-- needing session and window)
-				-- - disadvantage: if the pane is removed and another one created in
-				--   same position then that would no longer work
-				-- - advantage: if the pane is moved and/or other panes created before
-				--   it then it will still find the correct pane
-				-- - combining the two might be the best solution, i.e. verifying that
-				--   the pane with the specified id still exists and if not
-				--   auto-selecting the one that has the same index in the window
 				if cb ~= nil then
 					cb(createdNewPane)
 				end
@@ -245,6 +235,9 @@ function M.hasTarget(self)
 	return self.session ~= nil and self.window ~= nil and self.pane ~= nil
 end
 
+-- Verifies that the current session + window + pane constitute a valid target
+-- to be used for sending messages.
+-- @returns [isTargetValid: bool, isPaneFoundByIndex: bool, <name of target piece not found>? : string
 function M.verifyTarget(self)
 	assert(
 		self.session ~= nil and self.window ~= nil and self.pane ~= nil,
@@ -252,28 +245,44 @@ function M.verifyTarget(self)
 	)
 	sessions:refresh()
 
-	-- TODO(thlorenz): May not need all this if we can just send to the pane by
-	-- id no matter where it is
 	local session = sessions:getSessionById(self.session.id)
 	if session == nil then
-		return false, "session"
+		return false, false, "session"
 	end
 
 	local window = sessions:getWindowInSessionById(session, self.window.id)
 	if window == nil then
-		return false, "window"
+		return false, false, "window"
 	end
 
 	local pane = sessions:getPaneInWindowById(window, self.pane.id)
 	if pane == nil then
-		return false, "pane"
+		-- the user may allow selecting the pane at the same index as the target if
+		-- the exact pane matching the id is missing, see config.fallbackToPaneIndex
+		if window.panes[self.pane.index] == nil then
+			return false, false, "pane"
+		else
+			-- if the pane was found by index and the user configured to have it
+			-- promoted to the pane to be used going forward we do that
+			if conf.fallbackToPaneIndex then
+				vim.notify(
+					"Pane ("
+						.. self.pane.id
+						.. ") was destroyed, setting pane found at same position as target.",
+					"info"
+				)
+				self.pane = window.panes[self.pane.index]
+			end
+			return true, true
+		end
 	end
 
-	return true
+	-- pane found by id
+	return true, false
 end
 
-function M.tmuxTargetString(self, byIndex)
-	if byIndex then
+function M.tmuxTargetString(self, byPaneIndex)
+	if byPaneIndex then
 		return tmux.targetString(
 			self.session.name,
 			self.window.id,

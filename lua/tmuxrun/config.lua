@@ -18,6 +18,13 @@ local values = {
 	-- Stores 'Up' sent via :TmuxUp as lastCommand such that :TmuxRepeatCommand will send 'Up'.
 	-- Set this to false if you only want to store only commands sent via :TmuxCommand
 	storeUpCommand = true,
+	-- If a pane cannot be found by id, i.e. if it was closed, then tmuxrun will
+	-- try to find a pane that is at the index where the one it cannot find was
+	-- when it was selected as a target. That pane will be used going forward
+	-- after it was promoted until it is destroyed as well at which point the
+	-- next one at its index will be promoted and so on.
+	-- Set this to false to turn off that behavior.
+	fallbackToPaneIndex = true,
 }
 
 local config = { values = values }
@@ -40,6 +47,7 @@ function config.setup(opts)
 	config.setValue("activateTargetWindow", opts.activateTargetWindow, true)
 	config.setValue("ensureTarget", opts.ensureTarget, true)
 	config.setValue("storeUpCommand", opts.storeUpCommand, true)
+	config.setValue("fallbackToPaneIndex", opts.fallbackToPaneIndex, true)
 end
 
 return config
