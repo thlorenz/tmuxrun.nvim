@@ -10,6 +10,7 @@ function M._sendKeys(self, keys, opts)
 		self.selector:hasTarget(),
 		"should have selected session, window and pane"
 	)
+	-- TODO(thlorenz): pass if to select byIndex here
 	local cmd = "send-keys -t "
 		.. self.selector:tmuxTargetString()
 		.. ' "'
@@ -50,7 +51,7 @@ function M.sendKeys(self, keys, opts)
 				.. "'"
 		elseif "pane" == missing then
 			missingDetails = "Pane '"
-				.. self.selector.pane
+				.. self.selector.pane.id
 				.. "'"
 				.. " of window '"
 				.. self.selector.window.name

@@ -13,7 +13,7 @@ local M = {
 local utils = require("tmuxrun.utils")
 local sessions = require("tmuxrun.sessions")
 local tmux = require("tmuxrun.tmux")
-local pane = require("tmuxrun.pane")
+local tmuxPane = require("tmuxrun.pane")
 local conf = require("tmuxrun.config").values
 
 -- -----------------
@@ -87,46 +87,43 @@ function M.selectPane(self, session, window, cb)
 	assert(session, "Need to select session before selecting a window")
 	assert(window, "Need to select window before selecting a pane")
 
-	local defaultPaneIndex = pane.defaultPaneIndex(session, window)
+	local defaultPane = tmuxPane.defaultPane(session, window)
 
-	local allPaneIndexes, availablePaneIndexes = pane.availablePaneIndexes(
-		session,
-		window
-	)
+	local availablePanes = tmuxPane.availablePanes(session, window)
 
 	local defaultPaneInfo
-	if defaultPaneIndex == nil then
+	if defaultPane == nil then
 		-- when this vim session is in a window with just that one pane then we need
 		-- to create a new one
 		defaultPaneInfo = {
-			label = pane.labelPaneSelector(1, conf.autoSplitPane),
-			pane = 1,
+			label = tmuxPane.labelPaneSelector(1, conf.autoSplitPane),
+			pane = window.panes[1],
 			split = conf.autoSplitPane,
 		}
 	else
 		defaultPaneInfo = {
-			label = pane.labelPaneSelector(defaultPaneIndex),
-			pane = defaultPaneIndex,
+			label = tmuxPane.labelPaneSelector(defaultPane.index),
+			pane = defaultPane,
 		}
 	end
 
 	-- panes we can use as target directly
 	local paneInfos = { defaultPaneInfo }
-	for _, i in ipairs(availablePaneIndexes) do
-		if i ~= defaultPaneIndex then
+	for _, pane in ipairs(availablePanes) do
+		if pane.id ~= defaultPane.id then
 			table.insert(paneInfos, {
-				label = pane.labelPaneSelector(i),
-				pane = i,
+				label = tmuxPane.labelPaneSelector(pane.index),
+				pane = pane,
 			})
 		end
 	end
 
 	-- panes that we can split the target from
-	for _, i in ipairs(allPaneIndexes) do
-		for _, split in ipairs(pane.splitInfos) do
+	for _, pane in ipairs(window.panes) do
+		for _, split in ipairs(tmuxPane.splitInfos) do
 			local dsplit = defaultPaneInfo.split
 			if
-				defaultPaneInfo.pane ~= i
+				defaultPaneInfo.pane.id ~= pane.id
 				or (
 					dsplit == nil
 					or dsplit.placement ~= split.placement
@@ -134,8 +131,8 @@ function M.selectPane(self, session, window, cb)
 				)
 			then
 				table.insert(paneInfos, {
-					label = pane.labelPaneSelector(i, split),
-					pane = i,
+					label = tmuxPane.labelPaneSelector(pane.index, split),
+					pane = pane,
 					split = split,
 				})
 			end
@@ -177,7 +174,7 @@ function M.selectTarget(self, cb)
 				return
 			end
 			self:selectPane(session, window, function(paneInfo)
-				local paneIndex, createdNewPane = pane.processPaneSelector(
+				local paneIndex, createdNewPane = tmuxPane.processPaneSelector(
 					session.name,
 					window.id,
 					paneInfo.pane,
@@ -187,6 +184,19 @@ function M.selectTarget(self, cb)
 				self.window = window
 				self.pane = paneIndex
 
+				if createdNewPane then
+					-- Get the id of the newly created pane by first refreshing sessions
+					-- and finding it by current index
+					sessions:refresh()
+					local updatedWindow = sessions:getWindowInSessionById(
+						sessions:getSessionById(session.id),
+						window.id
+					)
+					self.pane = window.panes[paneIndex]
+				else
+					self.pane = paneInfo.pane
+				end
+
 				local action = createdNewPane and "Created" or "Selected"
 				vim.notify(
 					action
@@ -195,8 +205,11 @@ function M.selectTarget(self, cb)
 						.. ":"
 						.. window.name
 						.. "["
-						.. paneIndex
-						.. "]",
+						.. self.pane.index
+						.. "]"
+						.. "(id: "
+						.. self.pane.id
+						.. ")",
 					"info"
 				)
 
@@ -238,6 +251,9 @@ function M.verifyTarget(self)
 		"should not call verify target if no complete target was selected"
 	)
 	sessions:refresh()
+
+	-- TODO(thlorenz): May not need all this if we can just send to the pane by
+	-- id no matter where it is
 	local session = sessions:getSessionById(self.session.id)
 	if session == nil then
 		return false, "session"
@@ -248,15 +264,24 @@ function M.verifyTarget(self)
 		return false, "window"
 	end
 
-	if window.paneCount < self.pane then
+	local pane = sessions:getPaneInWindowById(window, self.pane.id)
+	if pane == nil then
 		return false, "pane"
 	end
 
 	return true
 end
 
-function M.tmuxTargetString(self)
-	return tmux.targetString(self.session.name, self.window.id, self.pane)
+function M.tmuxTargetString(self, byIndex)
+	if byIndex then
+		return tmux.targetString(
+			self.session.name,
+			self.window.id,
+			self.pane.index
+		)
+	else
+		return self.pane.id
+	end
 end
 
 -- -----------------

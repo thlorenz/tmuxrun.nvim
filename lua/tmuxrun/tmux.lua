@@ -180,8 +180,8 @@ function M.getActivePaneInfo()
 	}
 end
 
-function M.targetString(sessionName, windowId, pane)
-	return sessionName .. ":" .. windowId .. "." .. pane
+function M.targetString(sessionName, windowId, paneId)
+	return sessionName .. ":" .. windowId .. "." .. paneId
 end
 
 -- selects a window in a given session which is useful when sending a command to a session and

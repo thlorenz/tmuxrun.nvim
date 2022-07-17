@@ -16,13 +16,9 @@ end
 function M.getActiveWindows(self)
 	local sessions = {}
 	for sessionName, session in pairs(self.sessions) do
-		for name, win in pairs(session.windows) do
+		for _, win in pairs(session.windows) do
 			if win.active then
-				sessions[sessionName] = vim.tbl_extend(
-					"force",
-					win,
-					{ name = name }
-				)
+				sessions[sessionName] = win
 			end
 		end
 	end
@@ -137,6 +133,17 @@ function M.getWindowInSessionById(self, session, windowId)
 	for _, win in pairs(session.windows) do
 		if win.id == windowId then
 			return win
+		end
+	end
+end
+
+-- -----------------
+-- Panes
+-- -----------------
+function M.getPaneInWindowById(self, window, paneId)
+	for _, pane in pairs(window.panes) do
+		if pane.id == paneId then
+			return pane
 		end
 	end
 end
