@@ -11,6 +11,10 @@
 - [x] handle selecting windows if names clash (add id to title + select by id)
 - [x] handle case where we only have one pane and it is our vim session in which case the
   `defaultPaneIndex` comes back as `nil` (selector.lua:91)
+- [x] using pane id to identify target which allows moving pane around in the window without
+      loosing it
+- [x] falling back to pane at same index as target pane should it have been destroyed
+      (configurable)
 - [ ] KillRunnerPane (low priority)
 
 ## Persistence
