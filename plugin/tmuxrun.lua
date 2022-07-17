@@ -4,18 +4,28 @@ if 1 ~= vim.fn.has("nvim-0.7.0") then
 end
 
 if vim.g.loaded_tmuxrun == 1 then
-	-- return
+	return
 end
-vim.g.loaded_tmuxrun = 1
+vim.g.loaded_tmuxrun = 1 -- luacheck:ignore 122
 
-local require = require("tmuxrun.utils").re_require
 local api = require("tmuxrun.api")
-local utils = require("tmuxrun.utils")
 
 vim.api.nvim_create_user_command("TmuxSelectTarget", function(opts)
 	api.selectTarget()
 end, {})
 
-vim.api.nvim_create_user_command("TmuxSendCommand", function(opts)
-	api.sendCommand(opts.args, true)
+vim.api.nvim_create_user_command("TmuxUnselectTarget", function(opts)
+	api.unselectTarget()
+end, {})
+
+vim.api.nvim_create_user_command("TmuxCommand", function(opts)
+	api.sendCommand(opts.args)
 end, { nargs = 1 })
+
+vim.api.nvim_create_user_command("TmuxUp", function(opts)
+	api.sendUp()
+end, {})
+
+vim.api.nvim_create_user_command("TmuxRepeatCommand", function(opts)
+	api.repeatCommand()
+end, {})
