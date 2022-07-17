@@ -11,7 +11,7 @@ function M._sendKeys(self, keys, opts)
 		"should have selected session, window and pane"
 	)
 	local cmd = "send-keys -t "
-		.. self.selector:tmuxTargetString(opts.paneFoundByIndex)
+		.. self.selector:tmuxTargetString()
 		.. ' "'
 		.. keys:gsub('"', '\\"')
 		.. '"'
@@ -38,12 +38,8 @@ function M.sendKeys(self, keys, opts)
 		return
 	end
 
-	local isTargetValid, paneFoundByIndex, missing =
-		self.selector:verifyTarget()
-	if
-		not isTargetValid
-		or (paneFoundByIndex and not conf.fallbackToPaneIndex)
-	then
+	local isTargetValid, missing = self.selector:verifyTarget()
+	if not isTargetValid then
 		local missingDetails
 		if "session" == missing then
 			missingDetails = "Session '" .. self.selector.session.name .. "'"
@@ -69,8 +65,6 @@ function M.sendKeys(self, keys, opts)
 		vim.notify("Set a new target via: TmuxSelectTarget", "info")
 		return
 	end
-
-	opts.paneFoundByIndex = paneFoundByIndex
 
 	if conf.clearBeforeSend then
 		self:_sendClearSequence(opts)

@@ -237,7 +237,7 @@ end
 
 -- Verifies that the current session + window + pane constitute a valid target
 -- to be used for sending messages.
--- @returns [isTargetValid: bool, isPaneFoundByIndex: bool, <name of target piece not found>? : string
+-- @returns [isTargetValid: bool, <name of target piece not found>? : string
 function M.verifyTarget(self)
 	assert(
 		self.session ~= nil and self.window ~= nil and self.pane ~= nil,
@@ -247,50 +247,42 @@ function M.verifyTarget(self)
 
 	local session = sessions:getSessionById(self.session.id)
 	if session == nil then
-		return false, false, "session"
+		return false, "session"
 	end
 
 	local window = sessions:getWindowInSessionById(session, self.window.id)
 	if window == nil then
-		return false, false, "window"
+		return false, "window"
 	end
 
 	local pane = sessions:getPaneInWindowById(window, self.pane.id)
 	if pane == nil then
 		-- the user may allow selecting the pane at the same index as the target if
 		-- the exact pane matching the id is missing, see config.fallbackToPaneIndex
-		if window.panes[self.pane.index] == nil then
-			return false, false, "pane"
+		local paneByIndex = window.panes[self.pane.index]
+		if paneByIndex == nil or not conf.fallbackToPaneIndex then
+			return false, "pane"
 		else
 			-- if the pane was found by index and the user configured to have it
 			-- promoted to the pane to be used going forward we do that
-			if conf.fallbackToPaneIndex then
-				vim.notify(
-					"Pane ("
-						.. self.pane.id
-						.. ") was destroyed, setting pane found at same position as target.",
-					"info"
-				)
-				self.pane = window.panes[self.pane.index]
-			end
-			return true, true
+			vim.notify(
+				"Pane ("
+					.. self.pane.id
+					.. ") was destroyed, setting pane ("
+					.. paneByIndex.id
+					.. ") found at the same position as the new target.",
+				"info"
+			)
+			self.pane = paneByIndex
+			return true
 		end
+	else
+		return true
 	end
-
-	-- pane found by id
-	return true, false
 end
 
-function M.tmuxTargetString(self, byPaneIndex)
-	if byPaneIndex then
-		return tmux.targetString(
-			self.session.name,
-			self.window.id,
-			self.pane.index
-		)
-	else
-		return self.pane.id
-	end
+function M.tmuxTargetString(self)
+	return self.pane.id
 end
 
 -- -----------------
