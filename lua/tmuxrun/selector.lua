@@ -10,6 +10,8 @@ local M = {
 	pane = nil,
 }
 
+local SEP = "&"
+
 local utils = require("tmuxrun.utils")
 local sessions = require("tmuxrun.sessions")
 local tmux = require("tmuxrun.tmux")
@@ -315,6 +317,26 @@ function M.restoreTargetFromIds(self, sessionId, windowId, paneId)
 		self.window = window
 		self.pane = pane
 	end
+end
+
+function M.restoreFromEncodedTarget(self, encodedTarget)
+	local sessionId, windowId, paneId = utils.split(
+		"^(.+)" .. SEP .. "(.+)" .. SEP .. "(.+)",
+		utils.trim(encodedTarget)
+	)
+	if sessionId == nil or windowId == nil or paneId == nil then
+		return
+	end
+
+	self:restoreTargetFromIds(sessionId, windowId, paneId)
+end
+
+function M.encodeTarget(self)
+	if self.session == nil or self.window == nil or self.pane == nil then
+		return
+	end
+
+	return self.session.id .. SEP .. self.window.id .. SEP .. self.pane.id
 end
 
 -- -----------------

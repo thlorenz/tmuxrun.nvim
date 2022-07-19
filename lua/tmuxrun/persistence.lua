@@ -9,27 +9,33 @@ else
 	import = require
 end
 
-local sessions = import("tmuxrun.sessions")
 local selector = import("tmuxrun.selector")
 
-function M.store(self, sessionId, windowId, paneId) end
+function M.store()
+	-- TODO(thlorenz): use the below to store
+	if
+		selector.session == nil
+		or selector.window == nil
+		or selector.pane == nil
+	then
+		return
+	end
 
-function M.restore(sessionId, windowId, paneId)
-	assert(sessionId ~= nil, "need sessionId to restore")
-	assert(windowId ~= nil, "need windowId to restore")
-	assert(paneId ~= nil, "need paneId to restore")
+	local encodedTarget = selector:encodeTarget()
+	print(encodedTarget)
+	return encodedTarget
+end
 
-	selector:restoreTargetFromIds(sessionId, windowId, paneId)
+function M.restore(encodedTarget)
+	assert(encodedTarget ~= nil, "need encoded session target to restore")
+
+	selector:restoreFromEncodedTarget(encodedTarget)
+	vim.pretty_print(selector.pane)
 end
 
 if utils.isMain() then
-	local sessionId = "$9"
-	local windowId = "@58"
-	local paneId = "%75"
-	M.restore(sessionId, windowId, paneId)
-
-	vim.pretty_print(selector.window)
-	vim.pretty_print(selector.pane)
+	local encodedTarget = "$9" .. "&" .. "@58" .. "&" .. "%75"
+	M.restore(encodedTarget)
 end
 
 return M
