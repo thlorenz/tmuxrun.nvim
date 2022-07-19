@@ -297,10 +297,33 @@ function M.activateCurrentWindow(self)
 end
 
 -- -----------------
+-- Persistence
+-- -----------------
+function M.restoreTargetFromIds(self, sessionId, windowId, paneId)
+	sessions:refresh()
+
+	local session, window, pane = sessions:getSessionWindowPaneById(
+		sessionId,
+		windowId,
+		paneId
+	)
+	if session ~= nil and window ~= nil then
+		-- even if the target pane couldn't be found anymore, it makes sense to
+		-- restore session and window as that makes selecting that pane easier as
+		-- defaults will be set
+		self.session = session
+		self.window = window
+		self.pane = pane
+	end
+end
+
+-- -----------------
 -- Tests
 -- -----------------
 if utils.isMain() then
-	M:selectTarget()
+	M:selectTarget(function()
+		print(M.session.id .. ":" .. M.window.id .. ":" .. M.pane.id)
+	end)
 end
 
 return M
