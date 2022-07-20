@@ -10,9 +10,64 @@ else
 end
 
 local selector = import("tmuxrun.selector")
+local config = import("tmuxrun.config")
+local conf = config.values
 
-function M.store()
-	-- TODO(thlorenz): use the below to store
+-- -----------------
+-- Load/Save Settings
+-- -----------------
+
+-- TODO(thlorenz): figure out where to put that
+local settingsFile = "/tmp/tmuxrun.json"
+
+local function getSettingsKey()
+	if conf.gitProjects then
+		-- try nearest git dir first since that is more likely to denote a project root
+		local gitdir = vim.fn.system("git rev-parse --absolute-git-dir")
+		if gitdir ~= nil then
+			return string.sub(utils.trim(gitdir), 0, -6) -- cut off '/.git'
+		end
+	end
+	return vim.fn.getcwd()
+end
+
+local function loadSettings()
+	local f = io.open(settingsFile, "r")
+	if f == nil then
+		return {}
+	end
+	local json = f:read("*all")
+	f:close()
+
+	local statusOk, allSettings = pcall(vim.json.decode, json)
+	if not statusOk then
+		vim.notify(
+			"Tried to read invalid settings  from '" .. settingsFile .. "'",
+			"error"
+		)
+		vim.pretty_print(allSettings)
+		return {}
+	else
+		local settingsKey = getSettingsKey()
+		return allSettings[settingsKey] or {}
+	end
+end
+
+local function saveSettings(settings)
+	local settingsKey = getSettingsKey()
+	local allSettings = loadSettings()
+	allSettings[settingsKey] = settings
+	local json = vim.json.encode(allSettings)
+
+	local f = io.open(settingsFile, "w")
+	f:write(json)
+	f:close()
+end
+
+-- -----------------
+-- Target
+-- -----------------
+local function encodeTarget()
 	if
 		selector.session == nil
 		or selector.window == nil
@@ -21,21 +76,35 @@ function M.store()
 		return
 	end
 
-	local encodedTarget = selector:encodeTarget()
-	print(encodedTarget)
-	return encodedTarget
+	return selector:encodeTarget()
 end
 
-function M.restore(encodedTarget)
+local function restoreTarget(encodedTarget)
 	assert(encodedTarget ~= nil, "need encoded session target to restore")
 
 	selector:restoreFromEncodedTarget(encodedTarget)
-	vim.pretty_print(selector.pane)
+end
+
+-- -----------------
+-- API
+-- -----------------
+
+function M.save()
+	local encodedTarget = encodeTarget()
+	local settings = encodedTarget ~= nil and { target = encodedTarget } or {}
+
+	saveSettings(settings)
+end
+
+function M.load()
+	local settings = loadSettings()
+	if settings.target ~= nil then
+		restoreTarget(settings.target)
+	end
 end
 
 if utils.isMain() then
-	local encodedTarget = "$9" .. "&" .. "@58" .. "&" .. "%75"
-	M.restore(encodedTarget)
+	M.load()
 end
 
 return M

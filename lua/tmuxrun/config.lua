@@ -25,6 +25,14 @@ local values = {
 	-- next one at its index will be promoted and so on.
 	-- Set this to false to turn off that behavior.
 	fallbackToPaneIndex = true,
+
+	-- if true the selected targets are persisted to disk for each project
+	-- the root folder of a vim session is used to identify projects
+	persistTarget = true,
+
+	-- if true a `.git` folder when found is considered to define a project for which settings are saved
+	-- if false the current working dir `pwd` is defines that project
+	gitProjects = true,
 }
 
 local config = { values = values }
@@ -48,6 +56,7 @@ function config.setup(opts)
 	config.setValue("ensureTarget", opts.ensureTarget, true)
 	config.setValue("storeUpCommand", opts.storeUpCommand, true)
 	config.setValue("fallbackToPaneIndex", opts.fallbackToPaneIndex, true)
+	config.setValue("gitProjects", opts.gitProjects, true)
 end
 
 return config
