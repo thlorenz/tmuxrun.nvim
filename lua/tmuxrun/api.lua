@@ -3,7 +3,10 @@ local api = {}
 local utils = require("tmuxrun.utils")
 local selector = require("tmuxrun.selector")
 local runner = require("tmuxrun.runner")
-local conf = require("tmuxrun.config").values
+local persistence = require("tmuxrun.persistence")
+
+local config = require("tmuxrun.config")
+local conf = config.values
 
 local state = {
 	lastCommand = nil,
@@ -19,14 +22,6 @@ local function handleCommand(cmd, opts)
 	end
 end
 
-function api.selectTarget(cb)
-	selector:selectTarget(cb)
-end
-
-function api.unselectTarget()
-	return selector:unselectTarget()
-end
-
 local function _onEnsuredTarget(cmd, createdNewPane, opts)
 	assert(opts, "need to pass opts to _onEnsuredTarget")
 	if createdNewPane then
@@ -35,6 +30,25 @@ local function _onEnsuredTarget(cmd, createdNewPane, opts)
 		end, conf.newPaneInitTime)
 	else
 		handleCommand(cmd, opts)
+	end
+end
+
+function api.selectTarget(cb)
+	selector:selectTarget(function(...)
+		if conf.persistTarget then
+			api.saveSettings()
+		end
+		if cb ~= nil then
+			cb(...)
+		end
+	end)
+end
+
+function api.unselectTarget()
+	selector:unselectTarget()
+
+	if conf.persistTarget then
+		api.saveSettings()
 	end
 end
 
@@ -47,7 +61,7 @@ function api.sendCommand(cmd, opts)
 	local ensureTarget = opts.ensureTarget or conf.ensureTarget
 
 	if ensureTarget and (not selector:hasTarget()) then
-		selector:selectTarget(function(createdNewPane)
+		api.selectTarget(function(createdNewPane)
 			_onEnsuredTarget(cmd, createdNewPane, opts)
 		end)
 	else
@@ -70,6 +84,18 @@ function api.repeatCommand(opts)
 		return
 	end
 	api.sendCommand(state.lastCommand, opts)
+end
+
+-- This is not exposed via a command since it happens automatically,
+-- for instance whenever a new target is selected.
+-- However if a user wants to call this then they can.
+function api.saveSettings()
+	local savedSettings = persistence.save()
+end
+
+-- This isn't exposed either as it is invoked as part of tmuxrun.setup (see ./init.lua)
+function api.loadSettings()
+	local loadedSettings = persistence.load()
 end
 
 return api

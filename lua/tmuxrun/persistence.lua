@@ -14,12 +14,23 @@ local config = import("tmuxrun.config")
 local conf = config.values
 
 -- -----------------
+-- Get Storage Path
+-- -----------------
+local function getDataDir()
+	if vim.fn.has("nvim-0.3.1") == 1 then
+		return vim.fn.stdpath("data")
+	elseif vim.fn.has("win32") == 1 then
+		return "~/AppData/Local/nvim-data/"
+	else
+		return "~/.local/share/nvim"
+	end
+end
+
+local settingsFile = getDataDir() .. "/tmuxrun.json"
+
+-- -----------------
 -- Load/Save Settings
 -- -----------------
-
--- TODO(thlorenz): figure out where to put that
-local settingsFile = "/tmp/tmuxrun.json"
-
 local function getSettingsKey()
 	if conf.gitProjects then
 		-- try nearest git dir first since that is more likely to denote a project root
@@ -62,6 +73,8 @@ local function saveSettings(settings)
 	local f = io.open(settingsFile, "w")
 	f:write(json)
 	f:close()
+
+	return settings
 end
 
 -- -----------------
@@ -88,12 +101,11 @@ end
 -- -----------------
 -- API
 -- -----------------
-
 function M.save()
 	local encodedTarget = encodeTarget()
 	local settings = encodedTarget ~= nil and { target = encodedTarget } or {}
 
-	saveSettings(settings)
+	return saveSettings(settings)
 end
 
 function M.load()
@@ -101,10 +113,11 @@ function M.load()
 	if settings.target ~= nil then
 		restoreTarget(settings.target)
 	end
+	return settings
 end
 
 if utils.isMain() then
-	M.load()
+	print(settingsFile)
 end
 
 return M

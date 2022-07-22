@@ -27,6 +27,7 @@ local values = {
 	fallbackToPaneIndex = true,
 
 	-- if true the selected targets are persisted to disk for each project
+	-- whenever a settings item like the target changes
 	-- the root folder of a vim session is used to identify projects
 	persistTarget = true,
 
@@ -56,6 +57,7 @@ function config.setup(opts)
 	config.setValue("ensureTarget", opts.ensureTarget, true)
 	config.setValue("storeUpCommand", opts.storeUpCommand, true)
 	config.setValue("fallbackToPaneIndex", opts.fallbackToPaneIndex, true)
+	config.setValue("persistTarget", opts.persistTarget, true)
 	config.setValue("gitProjects", opts.gitProjects, true)
 end
 
