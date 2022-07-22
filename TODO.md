@@ -19,10 +19,20 @@
 
 ## Persistence
 
-- [-] optionally save last selected target to disk and reload on startup
+- [x] optionally save last selected target to disk and reload on startup
+- [ ] save last command
+    - this may have to happen on nvim close since we don't want to rewrite that settings file
+      each time the user executes a command (unless we ensure to do this only if the command
+      changed)
+
+### Won't do
+
 - [ ] save command history to disk and reload via command or automatically if so configured
   - there should be two types of histories, one per project and one where we show all commands
     from all projects
+
+`:Telescope command_history` fuzzy searched for `TmuxCommand` provides that functionality and
+more.
 
 It would be very nice to have multiple setups since they depend on the project.
 Either we key them by the full path to the root of the current vim session or allow users to
