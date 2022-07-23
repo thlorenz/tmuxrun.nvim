@@ -19,7 +19,7 @@
 ## Persistence
 
 - [x] optionally save last selected target to disk and reload on startup
-- [-] save last command
+- [x] save last command
     - this may have to happen on nvim close since we don't want to rewrite that settings file
       each time the user executes a command (unless we ensure to do this only if the command
       changed)
@@ -29,9 +29,9 @@
 - [x] repeat last command
 - [x] bring window to front when sending keys (if its's in the background) configurable
 - [x] clear sequence doesn't really work, prefixing with `clear;` does
-- [ ] save (current file | all files) before running command configurable
 - [x] resolve things like `%` (to current path) configurable
   - only supports replacing one occurrence which should cover 90% of cases
+- [ ] save (current file | all files) before running command configurable
 - [ ] SendCtrlD
 - [ ] SendCtrlC
 - [x] SendUp (repeats whatever was executed last in the pane)

@@ -45,7 +45,7 @@ end
 local function loadSettings()
 	local f = io.open(settingsFile, "r")
 	if f == nil then
-		return {}
+		return {}, {}
 	end
 	local json = f:read("*all")
 	f:close()
@@ -56,19 +56,22 @@ local function loadSettings()
 			"Tried to read invalid settings  from '" .. settingsFile .. "'",
 			"error"
 		)
-		vim.pretty_print(allSettings)
-		return {}
+		return {}, allSettings
 	else
 		local settingsKey = getSettingsKey()
-		return allSettings[settingsKey] or {}
+		return allSettings[settingsKey] or {}, allSettings
 	end
 end
 
 local function saveSettings(settings)
 	local settingsKey = getSettingsKey()
-	local allSettings = loadSettings()
-	allSettings[settingsKey] = settings
-	local json = vim.json.encode(allSettings)
+	local _, allSettings = loadSettings()
+	local updatedSettings = vim.tbl_extend(
+		"force",
+		allSettings,
+		{ [settingsKey] = settings }
+	)
+	local json = vim.json.encode(updatedSettings)
 
 	local f = io.open(settingsFile, "w")
 	f:write(json)
@@ -101,9 +104,16 @@ end
 -- -----------------
 -- API
 -- -----------------
-function M.save()
+-- state includes everything else than the selected target
+-- this state is currently maintained inside the api module
+function M.save(state)
+	-- using extend to make a copy of the state since we don't want to modify it as part of the save
+	local settings = vim.tbl_extend("keep", state, {})
+
 	local encodedTarget = encodeTarget()
-	local settings = encodedTarget ~= nil and { target = encodedTarget } or {}
+	if encodedTarget ~= nil then
+		settings.target = encodedTarget
+	end
 
 	return saveSettings(settings)
 end
@@ -117,7 +127,10 @@ function M.load()
 end
 
 if utils.isMain() then
-	print(settingsFile)
+	local state = { foo = 1 }
+	local ext = vim.tbl_extend("keep", state, { bar = 2 })
+	vim.pretty_print(state)
+	vim.pretty_print(ext)
 end
 
 return M

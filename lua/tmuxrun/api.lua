@@ -18,7 +18,14 @@ local function handleCommand(cmd, opts)
 	end
 	runner:sendKeys(cmd, opts)
 	if opts.storeCommand then
-		state.lastCommand = cmd
+		if cmd ~= state.lastCommand then
+			state.lastCommand = cmd
+			-- saving settings only if command changed which should be fine since we expect
+			-- the same commmand to be repeated much more in which case we don't persist
+			if conf.persistCommand then
+				api.saveSettings()
+			end
+		end
 	end
 end
 
@@ -90,12 +97,15 @@ end
 -- for instance whenever a new target is selected.
 -- However if a user wants to call this then they can.
 function api.saveSettings()
-	local savedSettings = persistence.save()
+	persistence.save(state)
 end
 
 -- This isn't exposed either as it is invoked as part of tmuxrun.setup (see ./init.lua)
 function api.loadSettings()
 	local loadedSettings = persistence.load()
+	if conf.persistCommand and loadedSettings.lastCommand ~= nil then
+		state.lastCommand = loadedSettings.lastCommand
+	end
 end
 
 return api

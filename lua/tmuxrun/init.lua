@@ -1,11 +1,11 @@
-local persistence = require("tmuxrun.persistence")
+local api = require("tmuxrun.api")
 local config = require("tmuxrun.config")
 
 local M = {}
 
 function M.setup(opts)
 	config.setup(opts)
-	persistence.load()
+	api.loadSettings()
 	return M
 end
 
