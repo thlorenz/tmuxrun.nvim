@@ -62,6 +62,13 @@ end
 function api.sendCommand(cmd, opts)
 	opts = opts or {}
 
+	-- optionally save active or all files before sending command
+	if conf.saveFile == config.SaveFile.All then
+		vim.api.nvim_command("wa")
+	elseif conf.saveFile == config.SaveFile.Active then
+		vim.api.nvim_command("w")
+	end
+
 	cmd = utils.resolveVimPathIdentifiers(cmd)
 
 	opts.storeCommand = utils.defaultTo(opts.storeCommand, true)
@@ -106,6 +113,10 @@ function api.loadSettings()
 	if conf.persistCommand and loadedSettings.lastCommand ~= nil then
 		state.lastCommand = loadedSettings.lastCommand
 	end
+end
+
+function api.showConfig()
+	vim.pretty_print(conf)
 end
 
 return api

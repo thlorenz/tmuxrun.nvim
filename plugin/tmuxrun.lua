@@ -29,3 +29,7 @@ end, {})
 vim.api.nvim_create_user_command("TmuxRepeatCommand", function(opts)
 	api.repeatCommand()
 end, {})
+
+vim.api.nvim_create_user_command("TmuxConfig", function(opts)
+	api.showConfig()
+end, {})
