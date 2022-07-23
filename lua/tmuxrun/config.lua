@@ -4,20 +4,27 @@
 local values = {
 	-- clear terminal pane before sending the command keys
 	clearBeforeSend = true,
+
 	-- clear sequence to use for the above
 	clearSequence = "",
+
 	-- in which direction to create a pane when tmuxrun creates it automatically
 	-- change to '{ placement = "after", direction = "horizontal" }' to split horizontally
 	autoSplitPane = { placement = "after", direction = "vertical" },
+
 	-- time in milliseconds give new terminal pane to get ready to receive commands
 	newPaneInitTime = 0,
+
 	-- ensures that the window that a command is sent to comes into view
 	activateTargetWindow = true,
+
 	-- ensures target when sending a command unless it is overriden for the particular call
 	ensureTarget = true,
+
 	-- Stores 'Up' sent via :TmuxUp as lastCommand such that :TmuxRepeatCommand will send 'Up'.
 	-- Set this to false if you only want to store only commands sent via :TmuxCommand
 	storeUpCommand = true,
+
 	-- If a pane cannot be found by id, i.e. if it was closed, then tmuxrun will
 	-- try to find a pane that is at the index where the one it cannot find was
 	-- when it was selected as a target. That pane will be used going forward
@@ -25,6 +32,19 @@ local values = {
 	-- next one at its index will be promoted and so on.
 	-- Set this to false to turn off that behavior.
 	fallbackToPaneIndex = true,
+
+	-- if true the selected targets are persisted to disk for each project
+	-- whenever a settings item like the target changes
+	-- the root folder of a vim session is used to identify projects
+	persistTarget = true,
+
+	-- if true then each time a new command is executed it is persisted and loaded
+	-- at startup
+	persistCommand = true,
+
+	-- if true a `.git` folder when found is considered to define a project for which settings are saved
+	-- if false the current working dir `pwd` defines that project instead
+	gitProjects = true,
 }
 
 local config = { values = values }
@@ -48,6 +68,9 @@ function config.setup(opts)
 	config.setValue("ensureTarget", opts.ensureTarget, true)
 	config.setValue("storeUpCommand", opts.storeUpCommand, true)
 	config.setValue("fallbackToPaneIndex", opts.fallbackToPaneIndex, true)
+	config.setValue("persistTarget", opts.persistTarget, true)
+	config.setValue("persistCommand", opts.persistCommand, true)
+	config.setValue("gitProjects", opts.gitProjects, true)
 end
 
 return config

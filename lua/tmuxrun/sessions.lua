@@ -148,6 +148,21 @@ function M.getPaneInWindowById(self, window, paneId)
 	end
 end
 
+function M.getSessionWindowPaneById(self, sessionId, windowId, paneId)
+	local session = self:getSessionById(sessionId)
+	if session == nil then
+		return nil, nil, nil
+	end
+
+	local window = session.windows[windowId]
+	if window == nil then
+		return session, nil, nil
+	end
+
+	local pane = self:getPaneInWindowById(window, paneId)
+	return session, window, pane
+end
+
 -- -----------------
 -- Clients
 -- -----------------

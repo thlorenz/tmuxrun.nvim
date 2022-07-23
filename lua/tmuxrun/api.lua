@@ -3,7 +3,10 @@ local api = {}
 local utils = require("tmuxrun.utils")
 local selector = require("tmuxrun.selector")
 local runner = require("tmuxrun.runner")
-local conf = require("tmuxrun.config").values
+local persistence = require("tmuxrun.persistence")
+
+local config = require("tmuxrun.config")
+local conf = config.values
 
 local state = {
 	lastCommand = nil,
@@ -15,16 +18,15 @@ local function handleCommand(cmd, opts)
 	end
 	runner:sendKeys(cmd, opts)
 	if opts.storeCommand then
-		state.lastCommand = cmd
+		if cmd ~= state.lastCommand then
+			state.lastCommand = cmd
+			-- saving settings only if command changed which should be fine since we expect
+			-- the same commmand to be repeated much more in which case we don't persist
+			if conf.persistCommand then
+				api.saveSettings()
+			end
+		end
 	end
-end
-
-function api.selectTarget(cb)
-	selector:selectTarget(cb)
-end
-
-function api.unselectTarget()
-	return selector:unselectTarget()
 end
 
 local function _onEnsuredTarget(cmd, createdNewPane, opts)
@@ -38,6 +40,25 @@ local function _onEnsuredTarget(cmd, createdNewPane, opts)
 	end
 end
 
+function api.selectTarget(cb)
+	selector:selectTarget(function(...)
+		if conf.persistTarget then
+			api.saveSettings()
+		end
+		if cb ~= nil then
+			cb(...)
+		end
+	end)
+end
+
+function api.unselectTarget()
+	selector:unselectTarget()
+
+	if conf.persistTarget then
+		api.saveSettings()
+	end
+end
+
 function api.sendCommand(cmd, opts)
 	opts = opts or {}
 
@@ -47,7 +68,7 @@ function api.sendCommand(cmd, opts)
 	local ensureTarget = opts.ensureTarget or conf.ensureTarget
 
 	if ensureTarget and (not selector:hasTarget()) then
-		selector:selectTarget(function(createdNewPane)
+		api.selectTarget(function(createdNewPane)
 			_onEnsuredTarget(cmd, createdNewPane, opts)
 		end)
 	else
@@ -70,6 +91,21 @@ function api.repeatCommand(opts)
 		return
 	end
 	api.sendCommand(state.lastCommand, opts)
+end
+
+-- This is not exposed via a command since it happens automatically,
+-- for instance whenever a new target is selected.
+-- However if a user wants to call this then they can.
+function api.saveSettings()
+	persistence.save(state)
+end
+
+-- This isn't exposed either as it is invoked as part of tmuxrun.setup (see ./init.lua)
+function api.loadSettings()
+	local loadedSettings = persistence.load()
+	if conf.persistCommand and loadedSettings.lastCommand ~= nil then
+		state.lastCommand = loadedSettings.lastCommand
+	end
 end
 
 return api

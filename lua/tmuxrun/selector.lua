@@ -10,6 +10,8 @@ local M = {
 	pane = nil,
 }
 
+local SEP = "&"
+
 local utils = require("tmuxrun.utils")
 local sessions = require("tmuxrun.sessions")
 local tmux = require("tmuxrun.tmux")
@@ -297,10 +299,53 @@ function M.activateCurrentWindow(self)
 end
 
 -- -----------------
+-- Persistence
+-- -----------------
+function M.restoreTargetFromIds(self, sessionId, windowId, paneId)
+	sessions:refresh()
+
+	local session, window, pane = sessions:getSessionWindowPaneById(
+		sessionId,
+		windowId,
+		paneId
+	)
+	if session ~= nil and window ~= nil then
+		-- even if the target pane couldn't be found anymore, it makes sense to
+		-- restore session and window as that makes selecting that pane easier as
+		-- defaults will be set
+		self.session = session
+		self.window = window
+		self.pane = pane
+	end
+end
+
+function M.restoreFromEncodedTarget(self, encodedTarget)
+	local sessionId, windowId, paneId = utils.split(
+		"^(.+)" .. SEP .. "(.+)" .. SEP .. "(.+)",
+		utils.trim(encodedTarget)
+	)
+	if sessionId == nil or windowId == nil or paneId == nil then
+		return
+	end
+
+	self:restoreTargetFromIds(sessionId, windowId, paneId)
+end
+
+function M.encodeTarget(self)
+	if self.session == nil or self.window == nil or self.pane == nil then
+		return
+	end
+
+	return self.session.id .. SEP .. self.window.id .. SEP .. self.pane.id
+end
+
+-- -----------------
 -- Tests
 -- -----------------
 if utils.isMain() then
-	M:selectTarget()
+	M:selectTarget(function()
+		print(M.session.id .. ":" .. M.window.id .. ":" .. M.pane.id)
+	end)
 end
 
 return M
