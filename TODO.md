@@ -31,7 +31,7 @@
 - [x] clear sequence doesn't really work, prefixing with `clear;` does
 - [x] resolve things like `%` (to current path) configurable
   - only supports replacing one occurrence which should cover 90% of cases
-- [ ] save (current file | all files) before running command configurable
+- [x] save (current file | all files) before running command configurable
 - [ ] SendCtrlD
 - [ ] SendCtrlC
 - [x] SendUp (repeats whatever was executed last in the pane)
@@ -56,3 +56,5 @@
 
 `:Telescope command_history` fuzzy searched for `TmuxCommand` provides that functionality and
 more.
+
+

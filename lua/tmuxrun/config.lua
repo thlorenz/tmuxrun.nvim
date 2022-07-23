@@ -1,6 +1,14 @@
+local SaveFile = {
+	-- saves all files, i.e. :wa
+	All = "All",
+	-- saves currently activ file, i.e. :w
+	Active = "Active",
+	-- does not save any file
+	None = "None",
+}
+
 -- these are local but may need to become globals to stay around during reloads
 -- (that's how telescope.nvim does it)
-
 local values = {
 	-- clear terminal pane before sending the command keys
 	clearBeforeSend = true,
@@ -45,9 +53,12 @@ local values = {
 	-- if true a `.git` folder when found is considered to define a project for which settings are saved
 	-- if false the current working dir `pwd` defines that project instead
 	gitProjects = true,
+
+	-- Save all or current file right before sending a command
+	saveFile = SaveFile.None,
 }
 
-local config = { values = values }
+local config = { values = values, SaveFile = SaveFile }
 
 function config.setValue(name, value, default)
 	values[name] = value == nil and default or value
@@ -71,6 +82,7 @@ function config.setup(opts)
 	config.setValue("persistTarget", opts.persistTarget, true)
 	config.setValue("persistCommand", opts.persistCommand, true)
 	config.setValue("gitProjects", opts.gitProjects, true)
+	config.setValue("saveFile", opts.saveFile, SaveFile.None)
 end
 
 return config

@@ -3,6 +3,8 @@ local config = require("tmuxrun.config")
 
 local M = {}
 
+M.SaveFile = config.SaveFile
+
 function M.setup(opts)
 	config.setup(opts)
 	api.loadSettings()
