@@ -19,6 +19,11 @@ function M._sendKeys(self, keys, opts)
 	return tmux.sendTmuxCommand(cmd)
 end
 
+function M.sendTmuxCommand(self, cmd)
+	local targetedCmd = cmd .. " -t " .. self.selector:tmuxTargetString()
+	tmux.sendTmuxCommand(targetedCmd)
+end
+
 function M._sendClearSequence(self, opts)
 	self:_sendKeys(conf.clearSequence, opts)
 end

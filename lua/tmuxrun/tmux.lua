@@ -6,9 +6,7 @@ local utils = require("tmuxrun.utils")
 -- Executes a command of form `tmux <command>`
 function M.sendTmuxCommand(cmd)
 	local prefixedCmd = "tmux " .. cmd
-	local result = vim.fn.system(prefixedCmd)
-	-- TODO(thlorenz): original SendTmuxcmd strips results we might have to do that as well
-	return result
+	return vim.fn.system(prefixedCmd)
 end
 
 function M.getLinesForCommand(cmd)

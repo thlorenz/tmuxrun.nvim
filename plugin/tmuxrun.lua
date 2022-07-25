@@ -10,11 +10,11 @@ vim.g.loaded_tmuxrun = 1 -- luacheck:ignore 122
 
 local api = require("tmuxrun.api")
 
-vim.api.nvim_create_user_command("TmuxSelectTarget", function(opts)
+vim.api.nvim_create_user_command("TmuxSelectTarget", function()
 	api.selectTarget()
 end, {})
 
-vim.api.nvim_create_user_command("TmuxUnselectTarget", function(opts)
+vim.api.nvim_create_user_command("TmuxUnselectTarget", function()
 	api.unselectTarget()
 end, {})
 
@@ -22,14 +22,26 @@ vim.api.nvim_create_user_command("TmuxCommand", function(opts)
 	api.sendCommand(opts.args)
 end, { nargs = 1 })
 
-vim.api.nvim_create_user_command("TmuxUp", function(opts)
+vim.api.nvim_create_user_command("TmuxUp", function()
 	api.sendUp()
 end, {})
 
-vim.api.nvim_create_user_command("TmuxRepeatCommand", function(opts)
+vim.api.nvim_create_user_command("TmuxCtrlC", function()
+	api.sendCtrlC()
+end, {})
+
+vim.api.nvim_create_user_command("TmuxCtrlD", function()
+	api.sendCtrlD()
+end, {})
+
+vim.api.nvim_create_user_command("TmuxRepeatCommand", function()
 	api.repeatCommand()
 end, {})
 
-vim.api.nvim_create_user_command("TmuxConfig", function(opts)
+vim.api.nvim_create_user_command("TmuxConfig", function()
 	api.showConfig()
+end, {})
+
+vim.api.nvim_create_user_command("TmuxZoom", function()
+	api.toggleZoom()
 end, {})

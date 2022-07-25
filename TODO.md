@@ -32,8 +32,8 @@
 - [x] resolve things like `%` (to current path) configurable
   - only supports replacing one occurrence which should cover 90% of cases
 - [x] save (current file | all files) before running command configurable
-- [ ] SendCtrlD
-- [ ] SendCtrlC
+- [x] SendCtrlC
+- [x] SendCtrlD
 - [x] SendUp (repeats whatever was executed last in the pane)
   - this is very useful when a command was executed in the pane already and we just want to
     repeat it without copy/pasting it and send via `TmuxCommand`
@@ -44,8 +44,7 @@
 
 ## Maybe Later
 
-- [ ] FocusRunnerPane and optionally zoom it (might not be possible across sessions)
-- [ ] KillRunnerPane
+- [-] FocusRunnerPane and optionally zoom it (might not be possible across sessions)
 
 ## Won't do
 
@@ -53,8 +52,9 @@
   - there should be two types of histories, one per project and one where we show all commands
     from all projects
   - [ ] integrate command history with telescope
+  `:Telescope command_history` fuzzy searched for `TmuxCommand` provides that functionality and
+  more.
 
-`:Telescope command_history` fuzzy searched for `TmuxCommand` provides that functionality and
-more.
+- [ ] KillRunnerPane (covered by `TmuxCtrlD`
 
 

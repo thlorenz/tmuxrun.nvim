@@ -62,16 +62,21 @@ end
 function api.sendCommand(cmd, opts)
 	opts = opts or {}
 
+	opts.storeCommand = utils.defaultTo(opts.storeCommand, true)
+
 	-- optionally save active or all files before sending command
-	if conf.saveFile == config.SaveFile.All then
-		vim.api.nvim_command("wa")
-	elseif conf.saveFile == config.SaveFile.Active then
-		vim.api.nvim_command("w")
+	-- for some commands like `Ctr-C` that makes no sense to it is skipped
+	-- in those cases, no matter what the configuration says
+	if opts.storeCommand then
+		if conf.saveFile == config.SaveFile.All then
+			vim.api.nvim_command("wa")
+		elseif conf.saveFile == config.SaveFile.Active then
+			vim.api.nvim_command("w")
+		end
 	end
 
 	cmd = utils.resolveVimPathIdentifiers(cmd)
 
-	opts.storeCommand = utils.defaultTo(opts.storeCommand, true)
 	local ensureTarget = opts.ensureTarget or conf.ensureTarget
 
 	if ensureTarget and (not selector:hasTarget()) then
@@ -89,7 +94,23 @@ function api.sendUp(opts)
 	api.sendCommand("Up", opts)
 end
 
+local function sendCtrlX(seq, opts)
+	opts = opts or {}
+	opts.storeCommand = utils.defaultTo(opts.storeCommand, false)
+	api.sendCommand(seq, opts)
+end
+
+function api.sendCtrlC(opts)
+	sendCtrlX("^C", opts)
+end
+
+function api.sendCtrlD(opts)
+	sendCtrlX("^D", opts)
+end
+
 function api.repeatCommand(opts)
+	opts = opts or {}
+
 	if state.lastCommand == nil then
 		vim.notify(
 			"No commmand was sent in this session, nothing to repeat",
@@ -97,6 +118,7 @@ function api.repeatCommand(opts)
 		)
 		return
 	end
+	opts.storeCommand = false
 	api.sendCommand(state.lastCommand, opts)
 end
 
@@ -117,6 +139,14 @@ end
 
 function api.showConfig()
 	vim.pretty_print(conf)
+end
+
+function api.toggleZoom()
+	if not selector:hasTarget() then
+		vim.notify("Select a target first before toggling its zoom", "warn")
+	else
+		runner:sendTmuxCommand("resize-pane -Z")
+	end
 end
 
 return api

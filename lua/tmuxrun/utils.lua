@@ -51,7 +51,11 @@ function M.moveListItem(list, itemToMove, targetIdx)
 end
 
 function M.defaultTo(val, default)
-	return val == nil and default or val
+	if val == nil then
+		return default
+	else
+		return val
+	end
 end
 
 local pathIdentifierRx1 = "(%%:[phtre]:[phtre]:[phtre]:[phtre]:[phtre])"
