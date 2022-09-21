@@ -16,6 +16,9 @@ local values = {
 	-- clear sequence to use for the above
 	clearSequence = "",
 
+	-- send Ctrl-C before sending command
+	ctrlcBeforeSend = false,
+
 	-- in which direction to create a pane when tmuxrun creates it automatically
 	-- change to '{ placement = "after", direction = "horizontal" }' to split horizontally
 	autoSplitPane = { placement = "after", direction = "vertical" },
@@ -70,6 +73,7 @@ function config.setup(opts)
 
 	config.setValue("clearBeforeSend", opts.clearBeforeSend, true)
 	config.setValue("clearSequence", opts.clearSequence, "")
+	config.setValue("ctrlcBeforeSend", opts.ctrlcBeforeSend, false)
 	config.setValue(
 		"autoSplitPane",
 		opts.autoSplitPane,

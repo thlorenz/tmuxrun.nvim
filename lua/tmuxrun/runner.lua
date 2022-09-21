@@ -5,7 +5,7 @@ local conf = config.values
 
 local M = { selector = selector }
 
-function M._sendKeys(self, keys, opts)
+function M._sendKeys(self, keys)
 	assert(
 		self.selector:hasTarget(),
 		"should have selected session, window and pane"
@@ -24,12 +24,12 @@ function M.sendTmuxCommand(self, cmd)
 	tmux.sendTmuxCommand(targetedCmd)
 end
 
-function M._sendClearSequence(self, opts)
-	self:_sendKeys(conf.clearSequence, opts)
+function M._sendClearSequence(self)
+	self:_sendKeys(conf.clearSequence)
 end
 
-function M._sendEnterSequence(self, opts)
-	self:_sendKeys("Enter", opts)
+function M._sendEnterSequence(self)
+	self:_sendKeys("Enter")
 end
 
 function M.sendKeys(self, keys, opts)
@@ -71,15 +71,26 @@ function M.sendKeys(self, keys, opts)
 		return
 	end
 
-	if conf.clearBeforeSend then
-		self:_sendClearSequence(opts)
+	function doSend()
+		if conf.clearBeforeSend then
+			self:_sendClearSequence()
+		end
+
+		local result = self:_sendKeys(keys)
+		if result ~= nil and result ~= "" then
+			return result
+		end
+		self:_sendEnterSequence()
 	end
 
-	local result = self:_sendKeys(keys, opts)
-	if result ~= nil and result ~= "" then
-		return result
+	if conf.ctrlcBeforeSend then
+		self:_sendKeys("^C")
+		-- it appears we need to give Ctrl-C some time to get handled and therefore
+		-- defer sending the command
+		vim.defer_fn(doSend, 200)
+	else
+		doSend()
 	end
-	return self:_sendEnterSequence(opts)
 end
 
 return M
