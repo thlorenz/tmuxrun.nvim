@@ -3,6 +3,7 @@ local api = {}
 local utils = require("tmuxrun.utils")
 local selector = require("tmuxrun.selector")
 local runner = require("tmuxrun.runner")
+local face = require("tmuxrun.face")
 local persistence = require("tmuxrun.persistence")
 
 local config = require("tmuxrun.config")
@@ -146,6 +147,14 @@ function api.toggleZoom()
 		vim.notify("Select a target first before toggling its zoom", "warn")
 	else
 		runner:sendTmuxCommand("resize-pane -Z")
+	end
+end
+
+function api.faceTarget()
+	if not selector:hasTarget() then
+		vim.notify("Select a target first before facing it", "warn")
+	else
+		face.openTerm(selector:targetSessionName())
 	end
 end
 

@@ -45,3 +45,10 @@ end, {})
 vim.api.nvim_create_user_command("TmuxZoom", function()
 	api.toggleZoom()
 end, {})
+
+vim.api.nvim_create_user_command("TmuxFace", function(opts)
+	api.faceTarget()
+	if opts.bang then
+		api.toggleZoom()
+	end
+end, { bang = true })

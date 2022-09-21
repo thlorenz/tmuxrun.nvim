@@ -21,6 +21,7 @@ local values = {
 	autoSplitPane = { placement = "after", direction = "vertical" },
 
 	-- time in milliseconds give new terminal pane to get ready to receive commands
+	-- this time is also used to wait opening a new terminal with the selected target
 	newPaneInitTime = 0,
 
 	-- ensures that the window that a command is sent to comes into view

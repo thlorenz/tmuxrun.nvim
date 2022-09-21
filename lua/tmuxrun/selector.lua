@@ -237,6 +237,22 @@ function M.hasTarget(self)
 	return self.session ~= nil and self.window ~= nil and self.pane ~= nil
 end
 
+function M.targetSessionId(self)
+	assert(
+		self.session ~= nil,
+		"cannot get session id if no session was selected"
+	)
+	return self.session.id
+end
+
+function M.targetSessionName(self)
+	assert(
+		self.session ~= nil,
+		"cannot get session name if no session was selected"
+	)
+	return self.session.name
+end
+
 -- Verifies that the current session + window + pane constitute a valid target
 -- to be used for sending messages.
 -- @returns [isTargetValid: bool, <name of target piece not found>? : string
